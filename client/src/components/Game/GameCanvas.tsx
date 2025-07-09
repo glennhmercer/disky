@@ -64,13 +64,13 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       // Calculate 3D velocity with forward (z) component
       const forwardVelocity = 35;
       
-      // Calculate direction based on aim point
-      const directionX = (aimDirection.x - startPos.x) * 0.015;
+      // Calculate direction based on aim point with higher sensitivity
+      const directionX = (aimDirection.x - startPos.x) * 0.04;
       
-      // Calculate vertical trajectory based on Y aim with diminishing returns
+      // Calculate vertical trajectory based on Y aim (inverted: higher = less fall)
       const aimY = aimDirection.y;
       const targetY = canvas.height * 0.3;
-      const verticalAim = (targetY - aimY) / (canvas.height * 0.5);
+      const verticalAim = (aimY - targetY) / (canvas.height * 0.5); // Inverted calculation
       const directionY = -8 + (verticalAim * 6);
       
       const velocity = {
@@ -113,12 +113,12 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       const forwardVelocity = 35;
       
       // Calculate direction based on aim point (same as throwing)
-      const directionX = (aimDirection.x - startPos.x) * 0.015;
+      const directionX = (aimDirection.x - startPos.x) * 0.04;
       
-      // Calculate vertical trajectory based on Y aim with diminishing returns
+      // Calculate vertical trajectory based on Y aim (inverted: higher = less fall)
       const aimY = aimDirection.y;
       const targetY = canvas.height * 0.3;
-      const verticalAim = (targetY - aimY) / (canvas.height * 0.5);
+      const verticalAim = (aimY - targetY) / (canvas.height * 0.5); // Inverted calculation
       const directionY = -8 + (verticalAim * 6);
       
       const velocity = {
