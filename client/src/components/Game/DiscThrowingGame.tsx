@@ -17,21 +17,18 @@ const DiscThrowingGame: React.FC = () => {
   const [gameStarted, setGameStarted] = useState(false);
   const [targetHit, setTargetHit] = useState(false);
 
-  // Pre-generate targets and obstacles to avoid Math.random() in render
-  const initialObstacles = useMemo(() => generateObstacles(3), [level]);
-
   useEffect(() => {
     if (phase === "ready") {
       const newTarget = generateSingleTarget(level);
       setTargets([newTarget]);
-      setObstacles(initialObstacles);
+      setObstacles([]); // No obstacles in Duck Hunt style gameplay
       if (level === 1) {
         setScore(0);
       }
       setGameStarted(false);
       setTargetHit(false);
     }
-  }, [phase, level, initialObstacles]);
+  }, [phase, level]);
 
   const handleStartGame = useCallback(() => {
     start();

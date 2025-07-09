@@ -47,11 +47,11 @@ export const generateObstacles = (count: number): Obstacle[] => {
   const canvasHeight = window.innerHeight || 800;
   
   for (let i = 0; i < count; i++) {
-    // Pre-calculate random values to avoid Math.random() in render
+    // Keep obstacles in the upper 60% of screen to avoid blocking throwing zone
     const x = Math.random() * (canvasWidth - 300) + 150;
-    const y = Math.random() * (canvasHeight - 300) + 150;
+    const y = Math.random() * (canvasHeight * 0.6) + 50; // Upper 60% only
     const width = 50 + Math.random() * 100;
-    const height = 100 + Math.random() * 150;
+    const height = 80 + Math.random() * 120;
     
     obstacles.push({
       id: `obstacle-${i}`,
