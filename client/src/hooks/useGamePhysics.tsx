@@ -7,20 +7,30 @@ export const useGamePhysics = () => {
       if (!disc.isActive) return disc;
 
       // Apply gravity
-      const gravity = 0.3;
+      const gravity = 0.25;
       const newVelocity = {
         x: disc.velocity.x,
         y: disc.velocity.y + gravity,
       };
 
-      // Apply air resistance
-      const airResistance = 0.99;
-      newVelocity.x *= airResistance;
-      newVelocity.y *= airResistance;
+      // Apply air resistance differently for x and y
+      const airResistanceX = 0.998; // Less resistance horizontally
+      const airResistanceY = 0.995; // More resistance vertically
+      newVelocity.x *= airResistanceX;
+      newVelocity.y *= airResistanceY;
 
-      // Apply spin effect for curve
-      const spinEffect = disc.spin * 0.5;
-      newVelocity.x += spinEffect;
+      // Enhanced spin physics for realistic curve
+      const currentSpeed = Math.sqrt(newVelocity.x * newVelocity.x + newVelocity.y * newVelocity.y);
+      const spinForce = disc.spin * Math.max(0.5, currentSpeed * 0.025); // Increased spin force multiplier
+      
+      // Magnus effect: perpendicular force to velocity direction
+      const velocityAngle = Math.atan2(newVelocity.y, newVelocity.x);
+      const perpendicularAngle = velocityAngle + Math.PI / 2;
+      
+      // Apply stronger curve effect
+      const curveMultiplier = 1.5; // Make curves more pronounced
+      newVelocity.x += Math.cos(perpendicularAngle) * spinForce * curveMultiplier;
+      newVelocity.y += Math.sin(perpendicularAngle) * spinForce * curveMultiplier;
 
       // Update position
       const newPosition = {
@@ -52,18 +62,30 @@ export const useGamePhysics = () => {
     const trajectory: Vector2D[] = [];
     let pos = { ...startPos };
     let vel = { ...velocity };
-    const gravity = 0.3;
-    const airResistance = 0.99;
-    const spinEffect = spin * 0.5;
+    const gravity = 0.25;
+    const airResistanceX = 0.998;
+    const airResistanceY = 0.995;
 
     for (let i = 0; i < steps; i++) {
       trajectory.push({ ...pos });
       
-      // Apply physics
+      // Apply physics matching the updateDiscs function
       vel.y += gravity;
-      vel.x *= airResistance;
-      vel.y *= airResistance;
-      vel.x += spinEffect;
+      vel.x *= airResistanceX;
+      vel.y *= airResistanceY;
+      
+      // Enhanced spin physics for realistic curve
+      const currentSpeed = Math.sqrt(vel.x * vel.x + vel.y * vel.y);
+      const spinForce = spin * Math.max(0.5, currentSpeed * 0.025);
+      
+      // Magnus effect: perpendicular force to velocity direction
+      const velocityAngle = Math.atan2(vel.y, vel.x);
+      const perpendicularAngle = velocityAngle + Math.PI / 2;
+      
+      // Apply stronger curve effect
+      const curveMultiplier = 1.5;
+      vel.x += Math.cos(perpendicularAngle) * spinForce * curveMultiplier;
+      vel.y += Math.sin(perpendicularAngle) * spinForce * curveMultiplier;
       
       pos.x += vel.x;
       pos.y += vel.y;

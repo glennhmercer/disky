@@ -73,7 +73,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       position: { ...startPos },
       velocity: { ...velocity },
       radius: 8,
-      spin: tiltAmount * 0.5, // Convert tilt to spin
+      spin: tiltAmount * 1.2, // Increased spin multiplier for more noticeable curve
       isActive: true,
     };
 
@@ -109,7 +109,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         isActive: true,
       };
 
-      const preview = calculateTrajectory(startPos, velocity, 100, tiltAmount * 0.5);
+      const preview = calculateTrajectory(startPos, velocity, 100, tiltAmount * 1.2);
       setTrajectoryPreview(preview);
     } else {
       setTrajectoryPreview([]);
@@ -236,7 +236,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         ctx.arc(disc.position.x + 2, disc.position.y + 2, radius, 0, Math.PI * 2);
         ctx.fill();
         
-        // Disc
+        // Disc with spin visualization
         ctx.fillStyle = "#FFD700";
         ctx.beginPath();
         ctx.arc(disc.position.x, disc.position.y, radius, 0, Math.PI * 2);
@@ -247,6 +247,15 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         ctx.beginPath();
         ctx.arc(disc.position.x - 1, disc.position.y - 1, radius * 0.4, 0, Math.PI * 2);
         ctx.fill();
+        
+        // Show spin direction with small indicator
+        if (Math.abs(disc.spin) > 0.1) {
+          ctx.fillStyle = disc.spin > 0 ? "#00FF00" : "#FF0000";
+          const spinOffset = disc.spin > 0 ? 2 : -2;
+          ctx.beginPath();
+          ctx.arc(disc.position.x + spinOffset, disc.position.y, radius * 0.2, 0, Math.PI * 2);
+          ctx.fill();
+        }
       }
     });
 
