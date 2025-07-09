@@ -128,6 +128,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         z: forwardVelocity,
       };
 
+      console.log("Trajectory preview - aimDirection:", aimDirection, "velocity:", velocity, "tiltAmount:", tiltAmount);
+      
       const preview = calculateTrajectory(startPos, velocity, 100, tiltAmount * 2);
       setTrajectoryPreview(preview);
     } else {
