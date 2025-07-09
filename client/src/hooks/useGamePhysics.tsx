@@ -24,7 +24,7 @@ export const useGamePhysics = () => {
 
       // Enhanced spin physics for realistic curve (only affects x-axis)
       const currentSpeed = Math.sqrt(newVelocity.x * newVelocity.x + newVelocity.z * newVelocity.z);
-      const spinForce = disc.spin * Math.max(0.5, currentSpeed * 0.05);
+      const spinForce = disc.spin * Math.max(0.4, currentSpeed * 0.03);
       
       // Apply spin only to horizontal movement
       newVelocity.x += spinForce;
@@ -84,7 +84,7 @@ export const useGamePhysics = () => {
       
       // Enhanced spin physics for realistic curve (apply after air resistance)
       const currentSpeed = Math.sqrt(vel.x * vel.x + vel.z * vel.z);
-      const spinForce = spin * Math.max(0.5, currentSpeed * 0.05);
+      const spinForce = spin * Math.max(0.4, currentSpeed * 0.03);
       
       // Apply spin only to horizontal movement
       vel.x += spinForce;

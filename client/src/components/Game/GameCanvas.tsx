@@ -82,14 +82,14 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       z: forwardVelocity, // Forward into the screen
     };
 
-    console.log("Throwing disc with velocity:", velocity, "aim:", aimDirection, "verticalAim:", verticalAim, "tiltAmount:", tiltAmount, "spin:", tiltAmount * 3);
+    console.log("Throwing disc with velocity:", velocity, "aim:", aimDirection, "verticalAim:", verticalAim, "tiltAmount:", tiltAmount, "spin:", tiltAmount * 2);
 
     const newDisc: Disc = {
       id: Date.now().toString(),
       position: { ...startPos },
       velocity: { ...velocity },
       radius: 8,
-      spin: tiltAmount * 3, // Much higher spin multiplier for more noticeable curve
+      spin: tiltAmount * 2, // Moderate spin multiplier for noticeable curve
       isActive: true,
     };
 
@@ -127,7 +127,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         z: forwardVelocity,
       };
 
-      const preview = calculateTrajectory(startPos, velocity, 100, tiltAmount * 3);
+      const preview = calculateTrajectory(startPos, velocity, 100, tiltAmount * 2);
       setTrajectoryPreview(preview);
     } else {
       setTrajectoryPreview([]);
