@@ -65,12 +65,14 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     const startPos = { x: canvas.width / 2, y: canvas.height - 50, z: 0 };
     
     // Calculate 3D velocity with forward (z) component
-    const forwardVelocity = 8; // Strong forward velocity
+    const forwardVelocity = 18; // Much stronger forward velocity
     const velocity = {
-      x: (aimDirection.x - startPos.x) * 0.01,
-      y: (aimDirection.y - startPos.y) * 0.01 - 3, // Upward initial velocity
+      x: (aimDirection.x - startPos.x) * 0.008,
+      y: (aimDirection.y - startPos.y) * 0.008 - 12, // Very strong upward initial velocity
       z: forwardVelocity, // Forward into the screen
     };
+
+    console.log("Throwing disc with velocity:", velocity);
 
     const newDisc: Disc = {
       id: Date.now().toString(),
@@ -98,10 +100,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       if (!canvas) return;
 
       const startPos = { x: canvas.width / 2, y: canvas.height - 50, z: 0 };
-      const forwardVelocity = 8;
+      const forwardVelocity = 18;
       const velocity = {
-        x: (aimDirection.x - startPos.x) * 0.01,
-        y: (aimDirection.y - startPos.y) * 0.01 - 3,
+        x: (aimDirection.x - startPos.x) * 0.008,
+        y: (aimDirection.y - startPos.y) * 0.008 - 12,
         z: forwardVelocity,
       };
 
