@@ -22,6 +22,29 @@ export const generateTargets = (count: number): Target[] => {
   return targets;
 };
 
+export const generateSingleTarget = (level: number): Target => {
+  const canvasWidth = window.innerWidth || 1200;
+  const canvasHeight = window.innerHeight || 800;
+  
+  // Make targets more challenging as level increases
+  const minDistance = 300 + (level * 50); // Further away each level
+  const maxDistance = canvasWidth - 100;
+  
+  // Position target randomly but ensure it's not too close
+  const x = Math.random() * (maxDistance - minDistance) + minDistance;
+  const y = Math.random() * (canvasHeight * 0.6) + (canvasHeight * 0.2); // Middle 60% of screen
+  
+  // Smaller targets at higher levels
+  const radius = Math.max(20, 40 - (level * 2));
+  
+  return {
+    id: `target-level-${level}`,
+    position: { x, y },
+    radius,
+    isHit: false,
+  };
+};
+
 export const generateObstacles = (count: number): Obstacle[] => {
   const obstacles: Obstacle[] = [];
   const canvasWidth = window.innerWidth || 1200;

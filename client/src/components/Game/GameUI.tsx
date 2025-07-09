@@ -4,10 +4,11 @@ import { Volume2, VolumeX } from "lucide-react";
 
 interface GameUIProps {
   score: number;
-  targetsRemaining: number;
+  level: number;
+  targetHit: boolean;
 }
 
-const GameUI: React.FC<GameUIProps> = ({ score, targetsRemaining }) => {
+const GameUI: React.FC<GameUIProps> = ({ score, level, targetHit }) => {
   const { isMuted, toggleMute } = useAudio();
 
   return (
@@ -20,8 +21,8 @@ const GameUI: React.FC<GameUIProps> = ({ score, targetsRemaining }) => {
         </div>
         
         <div className="bg-black bg-opacity-50 text-white px-4 py-2 rounded-lg">
-          <div className="text-sm">Targets Left</div>
-          <div className="text-2xl font-bold">{targetsRemaining}</div>
+          <div className="text-sm">Level</div>
+          <div className="text-2xl font-bold">{level}</div>
         </div>
         
         <button
@@ -32,12 +33,21 @@ const GameUI: React.FC<GameUIProps> = ({ score, targetsRemaining }) => {
         </button>
       </div>
 
+      {/* Target Hit Indicator */}
+      {targetHit && (
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+          <div className="bg-green-500 text-white px-8 py-4 rounded-lg text-2xl font-bold">
+            TARGET HIT!
+          </div>
+        </div>
+      )}
+
       {/* Instructions */}
       <div className="absolute bottom-4 left-4 bg-black bg-opacity-50 text-white px-4 py-2 rounded-lg">
         <div className="text-sm">
-          <div>🎯 Click and drag to aim</div>
-          <div>🥏 Release to throw disc</div>
-          <div>🎮 Use curved trajectories around obstacles</div>
+          <div>🎯 Step 1: Click to set direction</div>
+          <div>🥏 Step 2: Tilt left/right to curve</div>
+          <div>🎮 Hit the target to advance</div>
         </div>
       </div>
     </div>

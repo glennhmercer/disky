@@ -4,29 +4,34 @@ import GameUI from "./GameUI";
 import { useGame } from "../../lib/stores/useGame";
 import { useAudio } from "../../lib/stores/useAudio";
 import { GameObject, Target, Obstacle } from "../../lib/gameTypes";
-import { generateTargets, generateObstacles } from "../../lib/gameUtils";
+import { generateSingleTarget, generateObstacles } from "../../lib/gameUtils";
 
 const DiscThrowingGame: React.FC = () => {
   const { phase, start, restart, end } = useGame();
   const { playHit, playSuccess } = useAudio();
   
   const [score, setScore] = useState(0);
+  const [level, setLevel] = useState(1);
   const [targets, setTargets] = useState<Target[]>([]);
   const [obstacles, setObstacles] = useState<Obstacle[]>([]);
   const [gameStarted, setGameStarted] = useState(false);
+  const [targetHit, setTargetHit] = useState(false);
 
   // Pre-generate targets and obstacles to avoid Math.random() in render
-  const initialTargets = useMemo(() => generateTargets(8), []);
-  const initialObstacles = useMemo(() => generateObstacles(6), []);
+  const initialObstacles = useMemo(() => generateObstacles(3), [level]);
 
   useEffect(() => {
     if (phase === "ready") {
-      setTargets(initialTargets);
+      const newTarget = generateSingleTarget(level);
+      setTargets([newTarget]);
       setObstacles(initialObstacles);
-      setScore(0);
+      if (level === 1) {
+        setScore(0);
+      }
       setGameStarted(false);
+      setTargetHit(false);
     }
-  }, [phase, initialTargets, initialObstacles]);
+  }, [phase, level, initialObstacles]);
 
   const handleStartGame = useCallback(() => {
     start();
@@ -43,17 +48,16 @@ const DiscThrowingGame: React.FC = () => {
         ? { ...target, isHit: true }
         : target
     ));
-    setScore(prev => prev + 100);
+    setScore(prev => prev + 100 * level);
+    setTargetHit(true);
     playSuccess();
     
-    // Check if all targets are hit
-    const remainingTargets = targets.filter(t => !t.isHit && t.id !== targetId);
-    if (remainingTargets.length === 0) {
-      setTimeout(() => {
-        end();
-      }, 1000);
-    }
-  }, [targets, playSuccess, end]);
+    // Move to next level after hitting target
+    setTimeout(() => {
+      setLevel(prev => prev + 1);
+      restart(); // This will trigger the next level
+    }, 1500);
+  }, [level, playSuccess, restart]);
 
   const handleObstacleHit = useCallback(() => {
     playHit();
@@ -63,14 +67,14 @@ const DiscThrowingGame: React.FC = () => {
     return (
       <div className="w-full h-full flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-4xl font-bold text-white mb-4">Disc Throwing Game</h1>
+          <h1 className="text-4xl font-bold text-white mb-4">Disc Hunt</h1>
           <p className="text-xl text-white mb-6">
-            Throw discs to hit all targets! Use curved trajectories to get around obstacles.
+            Duck Hunt style disc throwing! Hit targets one at a time across levels.
           </p>
           <div className="text-white mb-8">
-            <p className="mb-2">🎯 Click and drag to aim</p>
-            <p className="mb-2">🥏 Release to throw disc</p>
-            <p className="mb-2">🎮 Adjust angle for curved throws</p>
+            <p className="mb-2">🎯 Step 1: Click to set throwing direction</p>
+            <p className="mb-2">🥏 Step 2: Tilt left/right to curve disc</p>
+            <p className="mb-2">🎮 Each level has one target to hit</p>
           </div>
           <button
             onClick={handleStartGame}
@@ -108,7 +112,7 @@ const DiscThrowingGame: React.FC = () => {
         onTargetHit={handleTargetHit}
         onObstacleHit={handleObstacleHit}
       />
-      <GameUI score={score} targetsRemaining={targets.filter(t => !t.isHit).length} />
+      <GameUI score={score} level={level} targetHit={targetHit} />
     </div>
   );
 };

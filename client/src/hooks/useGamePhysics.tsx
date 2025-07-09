@@ -46,14 +46,15 @@ export const useGamePhysics = () => {
   const calculateTrajectory = useCallback((
     startPos: Vector2D,
     velocity: Vector2D,
-    steps: number
+    steps: number,
+    spin: number = 0.2
   ): Vector2D[] => {
     const trajectory: Vector2D[] = [];
     let pos = { ...startPos };
     let vel = { ...velocity };
     const gravity = 0.3;
     const airResistance = 0.99;
-    const spinEffect = 0.2 * 0.5;
+    const spinEffect = spin * 0.5;
 
     for (let i = 0; i < steps; i++) {
       trajectory.push({ ...pos });

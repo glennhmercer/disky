@@ -1,6 +1,5 @@
 import React, { useRef, useEffect, useCallback, useState } from "react";
 import { useGamePhysics } from "../../hooks/useGamePhysics";
-import { useGameInput } from "../../hooks/useGameInput";
 import { Target, Obstacle, Disc, Vector2D } from "../../lib/gameTypes";
 
 interface GameCanvasProps {
@@ -10,6 +9,8 @@ interface GameCanvasProps {
   onObstacleHit: () => void;
 }
 
+type ControlStage = "direction" | "tilt" | "thrown";
+
 const GameCanvas: React.FC<GameCanvasProps> = ({
   targets,
   obstacles,
@@ -18,60 +19,15 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [discs, setDiscs] = useState<Disc[]>([]);
+  const [controlStage, setControlStage] = useState<ControlStage>("direction");
+  const [aimDirection, setAimDirection] = useState<Vector2D>({ x: 0, y: 0 });
+  const [tiltAmount, setTiltAmount] = useState(0);
   const [trajectoryPreview, setTrajectoryPreview] = useState<Vector2D[]>([]);
-  const [isAiming, setIsAiming] = useState(false);
-  const [aimStart, setAimStart] = useState<Vector2D>({ x: 0, y: 0 });
-  const [aimEnd, setAimEnd] = useState<Vector2D>({ x: 0, y: 0 });
+  const [crosshairPosition, setCrosshairPosition] = useState<Vector2D>({ x: 0, y: 0 });
 
   const { updateDiscs, calculateTrajectory, checkCollisions } = useGamePhysics();
-  const { mousePosition, isDragging, onMouseDown, onMouseMove, onMouseUp } = useGameInput();
 
-  // Handle aiming
-  useEffect(() => {
-    if (isDragging) {
-      setIsAiming(true);
-      setAimEnd(mousePosition);
-      
-      // Calculate trajectory preview
-      const startPos = { x: 100, y: window.innerHeight - 100 };
-      const velocity = {
-        x: (mousePosition.x - aimStart.x) * 0.02,
-        y: (mousePosition.y - aimStart.y) * 0.02,
-      };
-      const preview = calculateTrajectory(startPos, velocity, 50);
-      setTrajectoryPreview(preview);
-    } else {
-      setIsAiming(false);
-      setTrajectoryPreview([]);
-    }
-  }, [isDragging, mousePosition, aimStart, calculateTrajectory]);
-
-  // Handle disc throwing
-  const throwDisc = useCallback((startPos: Vector2D, velocity: Vector2D) => {
-    const newDisc: Disc = {
-      id: Date.now().toString(),
-      position: { ...startPos },
-      velocity: { ...velocity },
-      radius: 8,
-      spin: 0.2,
-      isActive: true,
-    };
-    setDiscs(prev => [...prev, newDisc]);
-  }, []);
-
-  // Handle mouse events
-  const handleMouseDown = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
-    const rect = canvasRef.current?.getBoundingClientRect();
-    if (rect) {
-      const pos = {
-        x: event.clientX - rect.left,
-        y: event.clientY - rect.top,
-      };
-      setAimStart(pos);
-      onMouseDown(pos);
-    }
-  }, [onMouseDown]);
-
+  // Handle mouse movement for crosshair
   const handleMouseMove = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
     const rect = canvasRef.current?.getBoundingClientRect();
     if (rect) {
@@ -79,30 +35,93 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         x: event.clientX - rect.left,
         y: event.clientY - rect.top,
       };
-      onMouseMove(pos);
+      setCrosshairPosition(pos);
+      
+      if (controlStage === "direction") {
+        setAimDirection(pos);
+      } else if (controlStage === "tilt") {
+        // Calculate tilt based on horizontal mouse movement
+        const centerX = rect.width / 2;
+        const tilt = (pos.x - centerX) / (rect.width / 2); // -1 to 1
+        setTiltAmount(Math.max(-1, Math.min(1, tilt)));
+      }
     }
-  }, [onMouseMove]);
+  }, [controlStage]);
 
-  const handleMouseUp = useCallback(() => {
-    if (isDragging) {
-      const startPos = { x: 100, y: window.innerHeight - 100 };
-      const velocity = {
-        x: (aimEnd.x - aimStart.x) * 0.02,
-        y: (aimEnd.y - aimStart.y) * 0.02,
-      };
-      throwDisc(startPos, velocity);
+  // Handle clicks for control stages
+  const handleClick = useCallback(() => {
+    if (controlStage === "direction") {
+      setControlStage("tilt");
+    } else if (controlStage === "tilt") {
+      throwDisc();
     }
-    onMouseUp();
-  }, [isDragging, aimEnd, aimStart, throwDisc, onMouseUp]);
+  }, [controlStage]);
+
+  // Throw disc with direction and tilt
+  const throwDisc = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const startPos = { x: canvas.width / 2, y: canvas.height - 50 };
+    const velocity = {
+      x: (aimDirection.x - startPos.x) * 0.015,
+      y: (aimDirection.y - startPos.y) * 0.015,
+    };
+
+    const newDisc: Disc = {
+      id: Date.now().toString(),
+      position: { ...startPos },
+      velocity: { ...velocity },
+      radius: 8,
+      spin: tiltAmount * 0.5, // Convert tilt to spin
+      isActive: true,
+    };
+
+    setDiscs(prev => [...prev, newDisc]);
+    setControlStage("thrown");
+    
+    // Reset for next throw after disc is gone
+    setTimeout(() => {
+      setControlStage("direction");
+      setTiltAmount(0);
+    }, 3000);
+  }, [aimDirection, tiltAmount]);
+
+  // Calculate trajectory preview
+  useEffect(() => {
+    if (controlStage === "tilt") {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+
+      const startPos = { x: canvas.width / 2, y: canvas.height - 50 };
+      const velocity = {
+        x: (aimDirection.x - startPos.x) * 0.015,
+        y: (aimDirection.y - startPos.y) * 0.015,
+      };
+
+      // Create a temporary disc with current tilt to preview trajectory
+      const tempDisc = {
+        id: "preview",
+        position: { ...startPos },
+        velocity: { ...velocity },
+        radius: 8,
+        spin: tiltAmount * 0.5,
+        isActive: true,
+      };
+
+      const preview = calculateTrajectory(startPos, velocity, 100, tiltAmount * 0.5);
+      setTrajectoryPreview(preview);
+    } else {
+      setTrajectoryPreview([]);
+    }
+  }, [controlStage, aimDirection, tiltAmount, calculateTrajectory]);
 
   // Game loop
   useEffect(() => {
     const gameLoop = () => {
-      // Update discs
       setDiscs(prev => {
         const updatedDiscs = updateDiscs(prev);
         
-        // Check collisions
         updatedDiscs.forEach(disc => {
           if (disc.isActive) {
             const collisions = checkCollisions(disc, targets, obstacles);
@@ -119,12 +138,11 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           }
         });
         
-        // Remove inactive discs after some time
         return updatedDiscs.filter(disc => disc.isActive);
       });
     };
 
-    const interval = setInterval(gameLoop, 16); // ~60 FPS
+    const interval = setInterval(gameLoop, 16);
     return () => clearInterval(interval);
   }, [updateDiscs, checkCollisions, targets, obstacles, onTargetHit, onObstacleHit]);
 
@@ -139,42 +157,69 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Draw background gradient
+    // Draw first-person view background
     const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-    gradient.addColorStop(0, "#87CEEB");
-    gradient.addColorStop(1, "#228B22");
+    gradient.addColorStop(0, "#87CEEB"); // Sky blue
+    gradient.addColorStop(0.7, "#90EE90"); // Light green
+    gradient.addColorStop(1, "#228B22"); // Forest green
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Draw obstacles
+    // Draw ground line
+    ctx.strokeStyle = "#654321";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(0, canvas.height * 0.8);
+    ctx.lineTo(canvas.width, canvas.height * 0.8);
+    ctx.stroke();
+
+    // Draw obstacles with 3D perspective
     obstacles.forEach(obstacle => {
-      ctx.fillStyle = "#8B4513";
-      ctx.fillRect(obstacle.position.x, obstacle.position.y, obstacle.width, obstacle.height);
+      const perspective = 1 - (obstacle.position.y / canvas.height) * 0.5;
+      const width = obstacle.width * perspective;
+      const height = obstacle.height * perspective;
       
-      // Add some texture
-      ctx.fillStyle = "#654321";
-      ctx.fillRect(obstacle.position.x + 2, obstacle.position.y + 2, obstacle.width - 4, obstacle.height - 4);
+      // Shadow
+      ctx.fillStyle = "rgba(0, 0, 0, 0.3)";
+      ctx.fillRect(obstacle.position.x + 5, obstacle.position.y + height, width, 10);
+      
+      // Main obstacle
+      ctx.fillStyle = "#8B4513";
+      ctx.fillRect(obstacle.position.x, obstacle.position.y, width, height);
+      
+      // Highlight
+      ctx.fillStyle = "#D2691E";
+      ctx.fillRect(obstacle.position.x, obstacle.position.y, width * 0.3, height * 0.3);
     });
 
-    // Draw targets
+    // Draw targets with 3D effect
     targets.forEach(target => {
       if (!target.isHit) {
-        // Draw target rings
-        ctx.strokeStyle = "#FF0000";
-        ctx.lineWidth = 3;
+        const perspective = 1 - (target.position.y / canvas.height) * 0.3;
+        const radius = target.radius * perspective;
+        
+        // Shadow
+        ctx.fillStyle = "rgba(0, 0, 0, 0.3)";
         ctx.beginPath();
-        ctx.arc(target.position.x, target.position.y, target.radius, 0, Math.PI * 2);
+        ctx.arc(target.position.x + 3, target.position.y + 3, radius, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Target rings
+        ctx.strokeStyle = "#FF0000";
+        ctx.lineWidth = 3 * perspective;
+        ctx.beginPath();
+        ctx.arc(target.position.x, target.position.y, radius, 0, Math.PI * 2);
         ctx.stroke();
         
         ctx.strokeStyle = "#FFFFFF";
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 2 * perspective;
         ctx.beginPath();
-        ctx.arc(target.position.x, target.position.y, target.radius * 0.6, 0, Math.PI * 2);
+        ctx.arc(target.position.x, target.position.y, radius * 0.6, 0, Math.PI * 2);
         ctx.stroke();
         
         ctx.fillStyle = "#FF0000";
         ctx.beginPath();
-        ctx.arc(target.position.x, target.position.y, target.radius * 0.3, 0, Math.PI * 2);
+        ctx.arc(target.position.x, target.position.y, radius * 0.3, 0, Math.PI * 2);
         ctx.fill();
       }
     });
@@ -182,22 +227,32 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     // Draw discs
     discs.forEach(disc => {
       if (disc.isActive) {
-        ctx.fillStyle = "#FFD700";
+        const perspective = 1 - (disc.position.y / canvas.height) * 0.3;
+        const radius = disc.radius * perspective;
+        
+        // Shadow
+        ctx.fillStyle = "rgba(0, 0, 0, 0.3)";
         ctx.beginPath();
-        ctx.arc(disc.position.x, disc.position.y, disc.radius, 0, Math.PI * 2);
+        ctx.arc(disc.position.x + 2, disc.position.y + 2, radius, 0, Math.PI * 2);
         ctx.fill();
         
-        // Add disc shine effect
+        // Disc
+        ctx.fillStyle = "#FFD700";
+        ctx.beginPath();
+        ctx.arc(disc.position.x, disc.position.y, radius, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Shine effect
         ctx.fillStyle = "#FFFF00";
         ctx.beginPath();
-        ctx.arc(disc.position.x - 2, disc.position.y - 2, disc.radius * 0.4, 0, Math.PI * 2);
+        ctx.arc(disc.position.x - 1, disc.position.y - 1, radius * 0.4, 0, Math.PI * 2);
         ctx.fill();
       }
     });
 
     // Draw trajectory preview
-    if (isAiming && trajectoryPreview.length > 0) {
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
+    if (trajectoryPreview.length > 0) {
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.7)";
       ctx.lineWidth = 2;
       ctx.setLineDash([5, 5]);
       ctx.beginPath();
@@ -209,22 +264,75 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       ctx.setLineDash([]);
     }
 
-    // Draw aiming line
-    if (isAiming) {
-      ctx.strokeStyle = "#FFFFFF";
-      ctx.lineWidth = 3;
+    // Draw crosshair
+    ctx.strokeStyle = controlStage === "direction" ? "#FFFFFF" : "#FF0000";
+    ctx.lineWidth = 2;
+    const crossSize = 20;
+    
+    // Horizontal line
+    ctx.beginPath();
+    ctx.moveTo(crosshairPosition.x - crossSize, crosshairPosition.y);
+    ctx.lineTo(crosshairPosition.x + crossSize, crosshairPosition.y);
+    ctx.stroke();
+    
+    // Vertical line
+    ctx.beginPath();
+    ctx.moveTo(crosshairPosition.x, crosshairPosition.y - crossSize);
+    ctx.lineTo(crosshairPosition.x, crosshairPosition.y + crossSize);
+    ctx.stroke();
+
+    // Draw aiming line in direction stage
+    if (controlStage === "direction") {
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
+      ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.moveTo(100, canvas.height - 100);
-      ctx.lineTo(mousePosition.x, mousePosition.y);
+      ctx.moveTo(canvas.width / 2, canvas.height - 50);
+      ctx.lineTo(aimDirection.x, aimDirection.y);
       ctx.stroke();
     }
 
-    // Draw player position indicator
-    ctx.fillStyle = "#000000";
-    ctx.fillRect(85, canvas.height - 115, 30, 30);
+    // Draw tilt indicator
+    if (controlStage === "tilt") {
+      const centerX = canvas.width / 2;
+      const indicatorY = canvas.height - 100;
+      const barWidth = 200;
+      const barHeight = 10;
+      
+      // Tilt bar background
+      ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+      ctx.fillRect(centerX - barWidth / 2, indicatorY, barWidth, barHeight);
+      
+      // Tilt indicator
+      ctx.fillStyle = tiltAmount < 0 ? "#FF4444" : "#44FF44";
+      const indicatorWidth = Math.abs(tiltAmount) * (barWidth / 2);
+      const indicatorX = tiltAmount < 0 ? centerX - indicatorWidth : centerX;
+      ctx.fillRect(indicatorX, indicatorY, indicatorWidth, barHeight);
+      
+      // Center line
+      ctx.strokeStyle = "#FFFFFF";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(centerX, indicatorY - 5);
+      ctx.lineTo(centerX, indicatorY + barHeight + 5);
+      ctx.stroke();
+    }
+
+    // Draw control stage instructions
+    ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+    ctx.fillRect(10, 10, 300, 60);
     ctx.fillStyle = "#FFFFFF";
-    ctx.fillRect(90, canvas.height - 110, 20, 20);
-  }, [discs, targets, obstacles, isAiming, trajectoryPreview, mousePosition]);
+    ctx.font = "16px Arial";
+    
+    if (controlStage === "direction") {
+      ctx.fillText("STEP 1: Move mouse to aim, click to confirm", 20, 30);
+      ctx.fillText("Direction set", 20, 50);
+    } else if (controlStage === "tilt") {
+      ctx.fillText("STEP 2: Move left/right to tilt, click to throw", 20, 30);
+      ctx.fillText(`Tilt: ${tiltAmount < 0 ? 'LEFT' : 'RIGHT'} (${Math.abs(tiltAmount * 100).toFixed(0)}%)`, 20, 50);
+    } else {
+      ctx.fillText("Disc thrown! Wait for next shot...", 20, 30);
+    }
+  }, [discs, targets, obstacles, controlStage, aimDirection, tiltAmount, trajectoryPreview, crosshairPosition]);
 
   // Animation loop
   useEffect(() => {
@@ -255,24 +363,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       ref={canvasRef}
       className="absolute inset-0 cursor-crosshair"
       style={{ touchAction: "none" }}
-      onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onTouchStart={(e) => {
-        e.preventDefault();
-        if (e.touches.length > 0) {
-          const touch = e.touches[0];
-          const rect = canvasRef.current?.getBoundingClientRect();
-          if (rect) {
-            const pos = {
-              x: touch.clientX - rect.left,
-              y: touch.clientY - rect.top,
-            };
-            setAimStart(pos);
-            onMouseDown(pos);
-          }
-        }
-      }}
+      onClick={handleClick}
       onTouchMove={(e) => {
         e.preventDefault();
         if (e.touches.length > 0) {
@@ -283,13 +375,21 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
               x: touch.clientX - rect.left,
               y: touch.clientY - rect.top,
             };
-            onMouseMove(pos);
+            setCrosshairPosition(pos);
+            
+            if (controlStage === "direction") {
+              setAimDirection(pos);
+            } else if (controlStage === "tilt") {
+              const centerX = rect.width / 2;
+              const tilt = (pos.x - centerX) / (rect.width / 2);
+              setTiltAmount(Math.max(-1, Math.min(1, tilt)));
+            }
           }
         }
       }}
-      onTouchEnd={(e) => {
+      onTouchStart={(e) => {
         e.preventDefault();
-        handleMouseUp();
+        handleClick();
       }}
     />
   );

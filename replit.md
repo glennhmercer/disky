@@ -2,7 +2,7 @@
 
 ## Overview
 
-This is a full-stack web application featuring a disc throwing game built with React, TypeScript, and Express.js. The game is a physics-based 2D canvas game where players throw discs at targets while avoiding obstacles. The application uses a modern tech stack with Vite for development, TailwindCSS for styling, and PostgreSQL with Drizzle ORM for data persistence.
+This is a full-stack web application featuring a Duck Hunt-style disc throwing game built with React, TypeScript, and Express.js. The game is a first-person 2D canvas game where players throw discs at single targets across levels using a two-stage control system. The application uses a modern tech stack with Vite for development, TailwindCSS for styling, and PostgreSQL with Drizzle ORM for data persistence.
 
 ## User Preferences
 
@@ -35,10 +35,11 @@ Preferred communication style: Simple, everyday language.
 
 ### Game Architecture
 - **Game Loop**: Canvas-based rendering with requestAnimationFrame
-- **Physics**: Custom physics engine with gravity, air resistance, and collision detection
+- **Physics**: Custom physics engine with gravity, air resistance, spin-based disc curvature, and collision detection
 - **State Management**: Zustand stores for game state, audio, and user preferences
-- **Input Handling**: Mouse/touch input with trajectory preview
+- **Input Handling**: Two-stage control system: direction setting then tilt adjustment
 - **Audio**: HTML5 Audio API with mute/unmute functionality
+- **Level System**: Single target per level with progressive difficulty
 
 ## Key Components
 
