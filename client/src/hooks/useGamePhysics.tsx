@@ -1,47 +1,49 @@
 import { useCallback } from "react";
-import { Disc, Vector2D, Target, Obstacle } from "../lib/gameTypes";
+import { Disc, Vector2D, Vector3D, Target, Obstacle } from "../lib/gameTypes";
 
 export const useGamePhysics = () => {
   const updateDiscs = useCallback((discs: Disc[]): Disc[] => {
     return discs.map(disc => {
       if (!disc.isActive) return disc;
 
-      // Apply gravity
-      const gravity = 0.25;
+      // Apply gravity (only affects y-axis)
+      const gravity = 0.2;
       const newVelocity = {
         x: disc.velocity.x,
         y: disc.velocity.y + gravity,
+        z: disc.velocity.z, // Forward motion
       };
 
-      // Apply air resistance differently for x and y
+      // Apply air resistance differently for each axis
       const airResistanceX = 0.998; // Less resistance horizontally
-      const airResistanceY = 0.995; // More resistance vertically
+      const airResistanceY = 0.995; // More resistance vertically  
+      const airResistanceZ = 0.999; // Minimal resistance forward
       newVelocity.x *= airResistanceX;
       newVelocity.y *= airResistanceY;
+      newVelocity.z *= airResistanceZ;
 
-      // Enhanced spin physics for realistic curve
-      const currentSpeed = Math.sqrt(newVelocity.x * newVelocity.x + newVelocity.y * newVelocity.y);
-      const spinForce = disc.spin * Math.max(0.5, currentSpeed * 0.025); // Increased spin force multiplier
+      // Enhanced spin physics for realistic curve (only affects x-axis)
+      const currentSpeed = Math.sqrt(newVelocity.x * newVelocity.x + newVelocity.z * newVelocity.z);
+      const spinForce = disc.spin * Math.max(0.3, currentSpeed * 0.02);
       
-      // Magnus effect: perpendicular force to velocity direction
-      const velocityAngle = Math.atan2(newVelocity.y, newVelocity.x);
-      const perpendicularAngle = velocityAngle + Math.PI / 2;
-      
-      // Apply stronger curve effect
-      const curveMultiplier = 1.5; // Make curves more pronounced
-      newVelocity.x += Math.cos(perpendicularAngle) * spinForce * curveMultiplier;
-      newVelocity.y += Math.sin(perpendicularAngle) * spinForce * curveMultiplier;
+      // Apply spin only to horizontal movement
+      newVelocity.x += spinForce;
 
-      // Update position
+      // Update 3D position
       const newPosition = {
         x: disc.position.x + newVelocity.x,
         y: disc.position.y + newVelocity.y,
+        z: disc.position.z + newVelocity.z,
       };
 
-      // Check bounds
-      if (newPosition.y > window.innerHeight + 50 || 
-          newPosition.x < -50 || 
-          newPosition.x > window.innerWidth + 50) {
+      // Check bounds (convert 3D to 2D for screen bounds)
+      const screenX = newPosition.x;
+      const screenY = newPosition.y;
+      
+      if (screenY > window.innerHeight + 50 || 
+          screenX < -50 || 
+          screenX > window.innerWidth + 50 ||
+          newPosition.z > 1000) { // Too far away
         return { ...disc, isActive: false };
       }
 
@@ -54,46 +56,49 @@ export const useGamePhysics = () => {
   }, []);
 
   const calculateTrajectory = useCallback((
-    startPos: Vector2D,
-    velocity: Vector2D,
+    startPos: Vector3D,
+    velocity: Vector3D,
     steps: number,
     spin: number = 0.2
   ): Vector2D[] => {
     const trajectory: Vector2D[] = [];
     let pos = { ...startPos };
     let vel = { ...velocity };
-    const gravity = 0.25;
+    const gravity = 0.2;
     const airResistanceX = 0.998;
     const airResistanceY = 0.995;
+    const airResistanceZ = 0.999;
 
     for (let i = 0; i < steps; i++) {
-      trajectory.push({ ...pos });
+      // Convert 3D position to 2D screen coordinates with perspective
+      const perspective = Math.max(0.1, 1 - (pos.z / 1000)); // Perspective scaling
+      const screenX = pos.x;
+      const screenY = pos.y;
       
-      // Apply physics matching the updateDiscs function
+      trajectory.push({ x: screenX, y: screenY });
+      
+      // Apply 3D physics matching the updateDiscs function
       vel.y += gravity;
       vel.x *= airResistanceX;
       vel.y *= airResistanceY;
+      vel.z *= airResistanceZ;
       
       // Enhanced spin physics for realistic curve
-      const currentSpeed = Math.sqrt(vel.x * vel.x + vel.y * vel.y);
-      const spinForce = spin * Math.max(0.5, currentSpeed * 0.025);
+      const currentSpeed = Math.sqrt(vel.x * vel.x + vel.z * vel.z);
+      const spinForce = spin * Math.max(0.3, currentSpeed * 0.02);
       
-      // Magnus effect: perpendicular force to velocity direction
-      const velocityAngle = Math.atan2(vel.y, vel.x);
-      const perpendicularAngle = velocityAngle + Math.PI / 2;
-      
-      // Apply stronger curve effect
-      const curveMultiplier = 1.5;
-      vel.x += Math.cos(perpendicularAngle) * spinForce * curveMultiplier;
-      vel.y += Math.sin(perpendicularAngle) * spinForce * curveMultiplier;
+      // Apply spin only to horizontal movement
+      vel.x += spinForce;
       
       pos.x += vel.x;
       pos.y += vel.y;
+      pos.z += vel.z;
       
       // Stop if out of bounds
       if (pos.y > window.innerHeight + 50 || 
           pos.x < -50 || 
-          pos.x > window.innerWidth + 50) {
+          pos.x > window.innerWidth + 50 ||
+          pos.z > 1000) {
         break;
       }
     }
@@ -106,7 +111,7 @@ export const useGamePhysics = () => {
     targets: Target[],
     obstacles: Obstacle[]
   ): { targetHit: string | null; obstacleHit: boolean } => {
-    // Check target collisions
+    // Check target collisions (targets are still 2D but we check against projected disc position)
     for (const target of targets) {
       if (!target.isHit) {
         const distance = Math.sqrt(
@@ -114,19 +119,26 @@ export const useGamePhysics = () => {
           Math.pow(disc.position.y - target.position.y, 2)
         );
         
-        if (distance < disc.radius + target.radius) {
+        // Consider perspective for collision detection
+        const perspective = Math.max(0.1, 1 - (disc.position.z / 1000));
+        const effectiveRadius = disc.radius * perspective;
+        
+        if (distance < effectiveRadius + target.radius) {
           return { targetHit: target.id, obstacleHit: false };
         }
       }
     }
 
-    // Check obstacle collisions
+    // Check obstacle collisions (obstacles are still 2D but we check against projected disc position)
     for (const obstacle of obstacles) {
+      const perspective = Math.max(0.1, 1 - (disc.position.z / 1000));
+      const effectiveRadius = disc.radius * perspective;
+      
       if (
-        disc.position.x + disc.radius > obstacle.position.x &&
-        disc.position.x - disc.radius < obstacle.position.x + obstacle.width &&
-        disc.position.y + disc.radius > obstacle.position.y &&
-        disc.position.y - disc.radius < obstacle.position.y + obstacle.height
+        disc.position.x + effectiveRadius > obstacle.position.x &&
+        disc.position.x - effectiveRadius < obstacle.position.x + obstacle.width &&
+        disc.position.y + effectiveRadius > obstacle.position.y &&
+        disc.position.y - effectiveRadius < obstacle.position.y + obstacle.height
       ) {
         return { targetHit: null, obstacleHit: true };
       }

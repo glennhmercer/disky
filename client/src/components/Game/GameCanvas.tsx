@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useCallback, useState } from "react";
 import { useGamePhysics } from "../../hooks/useGamePhysics";
-import { Target, Obstacle, Disc, Vector2D } from "../../lib/gameTypes";
+import { Target, Obstacle, Disc, Vector2D, Vector3D } from "../../lib/gameTypes";
 
 interface GameCanvasProps {
   targets: Target[];
@@ -62,10 +62,14 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const startPos = { x: canvas.width / 2, y: canvas.height - 50 };
+    const startPos = { x: canvas.width / 2, y: canvas.height - 50, z: 0 };
+    
+    // Calculate 3D velocity with forward (z) component
+    const forwardVelocity = 8; // Strong forward velocity
     const velocity = {
-      x: (aimDirection.x - startPos.x) * 0.015,
-      y: (aimDirection.y - startPos.y) * 0.015,
+      x: (aimDirection.x - startPos.x) * 0.01,
+      y: (aimDirection.y - startPos.y) * 0.01 - 3, // Upward initial velocity
+      z: forwardVelocity, // Forward into the screen
     };
 
     const newDisc: Disc = {
@@ -93,20 +97,12 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       const canvas = canvasRef.current;
       if (!canvas) return;
 
-      const startPos = { x: canvas.width / 2, y: canvas.height - 50 };
+      const startPos = { x: canvas.width / 2, y: canvas.height - 50, z: 0 };
+      const forwardVelocity = 8;
       const velocity = {
-        x: (aimDirection.x - startPos.x) * 0.015,
-        y: (aimDirection.y - startPos.y) * 0.015,
-      };
-
-      // Create a temporary disc with current tilt to preview trajectory
-      const tempDisc = {
-        id: "preview",
-        position: { ...startPos },
-        velocity: { ...velocity },
-        radius: 8,
-        spin: tiltAmount * 0.5,
-        isActive: true,
+        x: (aimDirection.x - startPos.x) * 0.01,
+        y: (aimDirection.y - startPos.y) * 0.01 - 3,
+        z: forwardVelocity,
       };
 
       const preview = calculateTrajectory(startPos, velocity, 100, tiltAmount * 1.2);
@@ -224,10 +220,11 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       }
     });
 
-    // Draw discs
+    // Draw discs with 3D perspective
     discs.forEach(disc => {
       if (disc.isActive) {
-        const perspective = 1 - (disc.position.y / canvas.height) * 0.3;
+        // Calculate perspective based on Z-distance
+        const perspective = Math.max(0.1, 1 - (disc.position.z / 1000));
         const radius = disc.radius * perspective;
         
         // Shadow
@@ -256,6 +253,11 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           ctx.arc(disc.position.x + spinOffset, disc.position.y, radius * 0.2, 0, Math.PI * 2);
           ctx.fill();
         }
+        
+        // Debug: Show Z-distance
+        ctx.fillStyle = "#FFFFFF";
+        ctx.font = "12px Arial";
+        ctx.fillText(`Z: ${disc.position.z.toFixed(0)}`, disc.position.x + 15, disc.position.y);
       }
     });
 
