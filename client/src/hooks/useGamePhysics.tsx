@@ -70,26 +70,26 @@ export const useGamePhysics = () => {
     const airResistanceZ = 0.9998;
 
     for (let i = 0; i < steps; i++) {
-      // Convert 3D position to 2D screen coordinates with perspective
-      const perspective = Math.max(0.1, 1 - (pos.z / 1000)); // Perspective scaling
+      // Convert 3D position to 2D screen coordinates (same as disc rendering)
       const screenX = pos.x;
       const screenY = pos.y;
       
       trajectory.push({ x: screenX, y: screenY });
       
-      // Apply 3D physics matching the updateDiscs function
+      // Apply 3D physics matching the updateDiscs function exactly
       vel.y += gravity;
       vel.x *= airResistanceX;
       vel.y *= airResistanceY;
       vel.z *= airResistanceZ;
       
-      // Enhanced spin physics for realistic curve
+      // Enhanced spin physics for realistic curve (apply after air resistance)
       const currentSpeed = Math.sqrt(vel.x * vel.x + vel.z * vel.z);
       const spinForce = spin * Math.max(0.3, currentSpeed * 0.02);
       
       // Apply spin only to horizontal movement
       vel.x += spinForce;
       
+      // Update position
       pos.x += vel.x;
       pos.y += vel.y;
       pos.z += vel.z;
@@ -98,7 +98,7 @@ export const useGamePhysics = () => {
       if (pos.y > window.innerHeight + 50 || 
           pos.x < -50 || 
           pos.x > window.innerWidth + 50 ||
-          pos.z > 1000) {
+          pos.z > 2000) {
         break;
       }
     }
