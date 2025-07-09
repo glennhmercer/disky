@@ -7,7 +7,7 @@ export const useGamePhysics = () => {
       if (!disc.isActive) return disc;
 
       // Apply gravity (only affects y-axis)
-      const gravity = 0.1;
+      const gravity = 0.08;
       const newVelocity = {
         x: disc.velocity.x,
         y: disc.velocity.y + gravity,
@@ -64,7 +64,7 @@ export const useGamePhysics = () => {
     const trajectory: Vector2D[] = [];
     let pos = { ...startPos };
     let vel = { ...velocity };
-    const gravity = 0.1;
+    const gravity = 0.08;
     const airResistanceX = 0.999;
     const airResistanceY = 0.997;
     const airResistanceZ = 0.9995;

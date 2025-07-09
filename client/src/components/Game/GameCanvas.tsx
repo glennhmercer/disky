@@ -65,11 +65,16 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     const startPos = { x: canvas.width / 2, y: canvas.height - 50, z: 0 };
     
     // Calculate 3D velocity with forward (z) component
-    const forwardVelocity = 18; // Much stronger forward velocity
+    const forwardVelocity = 25; // Much stronger forward velocity
     
     // Calculate direction based on aim point
-    const directionX = (aimDirection.x - startPos.x) * 0.015; // Increased multiplier for more sensitivity
-    const directionY = -8; // Base upward velocity
+    const directionX = (aimDirection.x - startPos.x) * 0.015;
+    
+    // Calculate vertical trajectory based on Y aim with diminishing returns
+    const aimY = aimDirection.y;
+    const targetY = canvas.height * 0.3; // Middle of upper screen
+    const verticalAim = (targetY - aimY) / (canvas.height * 0.5); // Normalized -1 to 1
+    const directionY = -8 + (verticalAim * 6); // Base -8, can go up to -14 or down to -2
     
     const velocity = {
       x: directionX,
@@ -77,7 +82,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       z: forwardVelocity, // Forward into the screen
     };
 
-    console.log("Throwing disc with velocity:", velocity, "aim:", aimDirection);
+    console.log("Throwing disc with velocity:", velocity, "aim:", aimDirection, "verticalAim:", verticalAim);
 
     const newDisc: Disc = {
       id: Date.now().toString(),
@@ -105,11 +110,16 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       if (!canvas) return;
 
       const startPos = { x: canvas.width / 2, y: canvas.height - 50, z: 0 };
-      const forwardVelocity = 18;
+      const forwardVelocity = 25;
       
       // Calculate direction based on aim point (same as throwing)
       const directionX = (aimDirection.x - startPos.x) * 0.015;
-      const directionY = -8;
+      
+      // Calculate vertical trajectory based on Y aim with diminishing returns
+      const aimY = aimDirection.y;
+      const targetY = canvas.height * 0.3;
+      const verticalAim = (targetY - aimY) / (canvas.height * 0.5);
+      const directionY = -8 + (verticalAim * 6);
       
       const velocity = {
         x: directionX,
