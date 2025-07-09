@@ -43,7 +43,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         // Calculate tilt based on horizontal mouse movement
         const centerX = rect.width / 2;
         const tilt = (pos.x - centerX) / (rect.width / 2); // -1 to 1
-        setTiltAmount(Math.max(-1, Math.min(1, tilt)));
+        const clampedTilt = Math.max(-1, Math.min(1, tilt));
+        console.log("Tilt updated:", clampedTilt, "mouse pos:", pos.x, "center:", centerX);
+        setTiltAmount(clampedTilt);
       }
     }
   }, [controlStage]);
@@ -53,55 +55,53 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     if (controlStage === "direction") {
       setControlStage("tilt");
     } else if (controlStage === "tilt") {
-      throwDisc();
+      // Throw disc immediately with current tilt amount
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+
+      const startPos = { x: canvas.width / 2, y: canvas.height - 50, z: 0 };
+      
+      // Calculate 3D velocity with forward (z) component
+      const forwardVelocity = 35;
+      
+      // Calculate direction based on aim point
+      const directionX = (aimDirection.x - startPos.x) * 0.015;
+      
+      // Calculate vertical trajectory based on Y aim with diminishing returns
+      const aimY = aimDirection.y;
+      const targetY = canvas.height * 0.3;
+      const verticalAim = (targetY - aimY) / (canvas.height * 0.5);
+      const directionY = -8 + (verticalAim * 6);
+      
+      const velocity = {
+        x: directionX,
+        y: directionY,
+        z: forwardVelocity,
+      };
+
+      console.log("Throwing disc with velocity:", velocity, "aim:", aimDirection, "verticalAim:", verticalAim, "tiltAmount:", tiltAmount, "spin:", tiltAmount * 2);
+
+      const newDisc: Disc = {
+        id: Date.now().toString(),
+        position: { ...startPos },
+        velocity: { ...velocity },
+        radius: 8,
+        spin: tiltAmount * 2,
+        isActive: true,
+      };
+
+      setDiscs(prev => [...prev, newDisc]);
+      setControlStage("thrown");
+      
+      // Reset for next throw after disc is gone
+      setTimeout(() => {
+        setControlStage("direction");
+        setTiltAmount(0);
+      }, 3000);
     }
-  }, [controlStage]);
+  }, [controlStage, aimDirection, tiltAmount]);
 
-  // Throw disc with direction and tilt
-  const throwDisc = useCallback(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
 
-    const startPos = { x: canvas.width / 2, y: canvas.height - 50, z: 0 };
-    
-    // Calculate 3D velocity with forward (z) component
-    const forwardVelocity = 35; // Much stronger forward velocity
-    
-    // Calculate direction based on aim point
-    const directionX = (aimDirection.x - startPos.x) * 0.015;
-    
-    // Calculate vertical trajectory based on Y aim with diminishing returns
-    const aimY = aimDirection.y;
-    const targetY = canvas.height * 0.3; // Middle of upper screen
-    const verticalAim = (targetY - aimY) / (canvas.height * 0.5); // Normalized -1 to 1
-    const directionY = -8 + (verticalAim * 6); // Base -8, can go up to -14 or down to -2
-    
-    const velocity = {
-      x: directionX,
-      y: directionY,
-      z: forwardVelocity, // Forward into the screen
-    };
-
-    console.log("Throwing disc with velocity:", velocity, "aim:", aimDirection, "verticalAim:", verticalAim, "tiltAmount:", tiltAmount, "spin:", tiltAmount * 2);
-
-    const newDisc: Disc = {
-      id: Date.now().toString(),
-      position: { ...startPos },
-      velocity: { ...velocity },
-      radius: 8,
-      spin: tiltAmount * 2, // Moderate spin multiplier for noticeable curve
-      isActive: true,
-    };
-
-    setDiscs(prev => [...prev, newDisc]);
-    setControlStage("thrown");
-    
-    // Reset for next throw after disc is gone
-    setTimeout(() => {
-      setControlStage("direction");
-      setTiltAmount(0);
-    }, 3000);
-  }, [aimDirection, tiltAmount]);
 
   // Calculate trajectory preview
   useEffect(() => {
