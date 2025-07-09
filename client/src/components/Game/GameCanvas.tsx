@@ -106,7 +106,27 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
   // Calculate trajectory preview
   useEffect(() => {
-    if (controlStage === "tilt") {
+    if (controlStage === "direction") {
+      // During direction phase, show straight line to cursor
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+
+      const startPos = { x: canvas.width / 2, y: canvas.height - 50 };
+      const endPos = { x: crosshairPosition.x, y: crosshairPosition.y };
+      
+      // Create straight line preview
+      const straightLine = [];
+      const steps = 50;
+      for (let i = 0; i <= steps; i++) {
+        const t = i / steps;
+        straightLine.push({
+          x: startPos.x + (endPos.x - startPos.x) * t,
+          y: startPos.y + (endPos.y - startPos.y) * t,
+        });
+      }
+      setTrajectoryPreview(straightLine);
+    } else if (controlStage === "tilt") {
+      // During tilt phase, show curved trajectory with physics
       const canvas = canvasRef.current;
       if (!canvas) return;
 
@@ -128,14 +148,12 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         z: forwardVelocity,
       };
 
-      console.log("Trajectory preview - aimDirection:", aimDirection, "velocity:", velocity, "tiltAmount:", tiltAmount);
-      
       const preview = calculateTrajectory(startPos, velocity, 100, tiltAmount * 2);
       setTrajectoryPreview(preview);
     } else {
       setTrajectoryPreview([]);
     }
-  }, [controlStage, aimDirection, tiltAmount, calculateTrajectory]);
+  }, [controlStage, aimDirection, tiltAmount, crosshairPosition, calculateTrajectory]);
 
   // Game loop
   useEffect(() => {
