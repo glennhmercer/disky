@@ -65,7 +65,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     const startPos = { x: canvas.width / 2, y: canvas.height - 50, z: 0 };
     
     // Calculate 3D velocity with forward (z) component
-    const forwardVelocity = 25; // Much stronger forward velocity
+    const forwardVelocity = 35; // Much stronger forward velocity
     
     // Calculate direction based on aim point
     const directionX = (aimDirection.x - startPos.x) * 0.015;
@@ -110,7 +110,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       if (!canvas) return;
 
       const startPos = { x: canvas.width / 2, y: canvas.height - 50, z: 0 };
-      const forwardVelocity = 25;
+      const forwardVelocity = 35;
       
       // Calculate direction based on aim point (same as throwing)
       const directionX = (aimDirection.x - startPos.x) * 0.015;

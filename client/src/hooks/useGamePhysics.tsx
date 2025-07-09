@@ -7,7 +7,7 @@ export const useGamePhysics = () => {
       if (!disc.isActive) return disc;
 
       // Apply gravity (only affects y-axis)
-      const gravity = 0.08;
+      const gravity = 0.05;
       const newVelocity = {
         x: disc.velocity.x,
         y: disc.velocity.y + gravity,
@@ -15,9 +15,9 @@ export const useGamePhysics = () => {
       };
 
       // Apply air resistance differently for each axis
-      const airResistanceX = 0.999; // Less resistance horizontally
-      const airResistanceY = 0.997; // More resistance vertically  
-      const airResistanceZ = 0.9995; // Minimal resistance forward
+      const airResistanceX = 0.9995; // Less resistance horizontally
+      const airResistanceY = 0.999; // More resistance vertically  
+      const airResistanceZ = 0.9998; // Minimal resistance forward
       newVelocity.x *= airResistanceX;
       newVelocity.y *= airResistanceY;
       newVelocity.z *= airResistanceZ;
@@ -43,7 +43,7 @@ export const useGamePhysics = () => {
       if (screenY > window.innerHeight + 50 || 
           screenX < -50 || 
           screenX > window.innerWidth + 50 ||
-          newPosition.z > 1000) { // Too far away
+          newPosition.z > 2000) { // Too far away
         return { ...disc, isActive: false };
       }
 
@@ -64,10 +64,10 @@ export const useGamePhysics = () => {
     const trajectory: Vector2D[] = [];
     let pos = { ...startPos };
     let vel = { ...velocity };
-    const gravity = 0.08;
-    const airResistanceX = 0.999;
-    const airResistanceY = 0.997;
-    const airResistanceZ = 0.9995;
+    const gravity = 0.05;
+    const airResistanceX = 0.9995;
+    const airResistanceY = 0.999;
+    const airResistanceZ = 0.9998;
 
     for (let i = 0; i < steps; i++) {
       // Convert 3D position to 2D screen coordinates with perspective
