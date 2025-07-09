@@ -24,6 +24,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const [tiltAmount, setTiltAmount] = useState(0);
   const [trajectoryPreview, setTrajectoryPreview] = useState<Vector2D[]>([]);
   const [crosshairPosition, setCrosshairPosition] = useState<Vector2D>({ x: 0, y: 0 });
+  const [tiltCenterX, setTiltCenterX] = useState(0);
 
   const { updateDiscs, calculateTrajectory, checkCollisions } = useGamePhysics();
 
@@ -40,11 +41,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       if (controlStage === "direction") {
         setAimDirection(pos);
       } else if (controlStage === "tilt") {
-        // Calculate tilt based on horizontal mouse movement
-        const centerX = rect.width / 2;
-        const tilt = (pos.x - centerX) / (rect.width / 2); // -1 to 1
+        // Calculate tilt based on horizontal mouse movement from first click position
+        const tilt = (pos.x - tiltCenterX) / (rect.width / 2); // -1 to 1
         const clampedTilt = Math.max(-1, Math.min(1, tilt));
-        console.log("Tilt updated:", clampedTilt, "mouse pos:", pos.x, "center:", centerX);
+        console.log("Tilt updated:", clampedTilt, "mouse pos:", pos.x, "center:", tiltCenterX);
         setTiltAmount(clampedTilt);
       }
     }
@@ -53,6 +53,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   // Handle clicks for control stages
   const handleClick = useCallback(() => {
     if (controlStage === "direction") {
+      setTiltCenterX(aimDirection.x); // Store the first click position as tilt center
       setControlStage("tilt");
     } else if (controlStage === "tilt") {
       // Throw disc immediately with current tilt amount
@@ -112,7 +113,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       const startPos = { x: canvas.width / 2, y: canvas.height - 50, z: 0 };
       const forwardVelocity = 35;
       
-      // Calculate direction based on aim point (same as throwing)
+      // Use the stored aim direction (same as throwing logic)
       const directionX = (aimDirection.x - startPos.x) * 0.04;
       
       // Calculate vertical trajectory based on Y aim (inverted: higher = less fall)
@@ -326,27 +327,26 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
     // Draw tilt indicator
     if (controlStage === "tilt") {
-      const centerX = canvas.width / 2;
       const indicatorY = canvas.height - 100;
       const barWidth = 200;
       const barHeight = 10;
       
       // Tilt bar background
       ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
-      ctx.fillRect(centerX - barWidth / 2, indicatorY, barWidth, barHeight);
+      ctx.fillRect(tiltCenterX - barWidth / 2, indicatorY, barWidth, barHeight);
       
       // Tilt indicator
       ctx.fillStyle = tiltAmount < 0 ? "#FF4444" : "#44FF44";
       const indicatorWidth = Math.abs(tiltAmount) * (barWidth / 2);
-      const indicatorX = tiltAmount < 0 ? centerX - indicatorWidth : centerX;
+      const indicatorX = tiltAmount < 0 ? tiltCenterX - indicatorWidth : tiltCenterX;
       ctx.fillRect(indicatorX, indicatorY, indicatorWidth, barHeight);
       
-      // Center line
+      // Center line (at tilt center, not screen center)
       ctx.strokeStyle = "#FFFFFF";
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.moveTo(centerX, indicatorY - 5);
-      ctx.lineTo(centerX, indicatorY + barHeight + 5);
+      ctx.moveTo(tiltCenterX, indicatorY - 5);
+      ctx.lineTo(tiltCenterX, indicatorY + barHeight + 5);
       ctx.stroke();
     }
 
@@ -413,8 +413,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
             if (controlStage === "direction") {
               setAimDirection(pos);
             } else if (controlStage === "tilt") {
-              const centerX = rect.width / 2;
-              const tilt = (pos.x - centerX) / (rect.width / 2);
+              const tilt = (pos.x - tiltCenterX) / (rect.width / 2);
               setTiltAmount(Math.max(-1, Math.min(1, tilt)));
             }
           }
