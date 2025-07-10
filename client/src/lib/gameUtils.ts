@@ -64,20 +64,47 @@ export const generateObstacles = (count: number): Obstacle[] => {
     const obstacleAreaX = Math.random() * (canvasWidth - 300) + 150;
     const obstacleAreaY = Math.random() * (canvasHeight * 0.6) + 50; // Upper 60% only
     
-    // Position obstacle between 35% and 85% of the distance from throwing position to obstacle area
-    const distancePercent = 0.35 + Math.random() * 0.5; // Random between 35% and 85%
+    // Position obstacle between 50% and 90% of the distance from throwing position to obstacle area
+    // This ensures obstacles are never too close to the throwing spot
+    const distancePercent = 0.5 + Math.random() * 0.4; // Random between 50% and 90%
     const obstacleX = throwingX + (obstacleAreaX - throwingX) * distancePercent;
     const obstacleY = throwingY + (obstacleAreaY - throwingY) * distancePercent;
     
-    const width = 50 + Math.random() * 100;
-    const height = 80 + Math.random() * 120;
+    // Additional safety check - ensure obstacle is at least 200 pixels away from throwing position
+    const distanceFromThrowingSpot = Math.sqrt(
+      Math.pow(obstacleX - throwingX, 2) + Math.pow(obstacleY - throwingY, 2)
+    );
     
-    obstacles.push({
-      id: `obstacle-${i}`,
-      position: { x: obstacleX, y: obstacleY },
-      width,
-      height,
-    });
+    if (distanceFromThrowingSpot < 200) {
+      // Move obstacle further away if it's too close
+      const direction = Math.atan2(obstacleY - throwingY, obstacleX - throwingX);
+      const newObstacleX = throwingX + Math.cos(direction) * 200;
+      const newObstacleY = throwingY + Math.sin(direction) * 200;
+      
+      // Ensure the moved obstacle is still within bounds
+      const finalObstacleX = Math.max(75, Math.min(canvasWidth - 75, newObstacleX));
+      const finalObstacleY = Math.max(50, Math.min(canvasHeight - 100, newObstacleY));
+      
+      const width = 50 + Math.random() * 100;
+      const height = 80 + Math.random() * 120;
+      
+      obstacles.push({
+        id: `obstacle-${i}`,
+        position: { x: finalObstacleX, y: finalObstacleY },
+        width,
+        height,
+      });
+    } else {
+      const width = 50 + Math.random() * 100;
+      const height = 80 + Math.random() * 120;
+      
+      obstacles.push({
+        id: `obstacle-${i}`,
+        position: { x: obstacleX, y: obstacleY },
+        width,
+        height,
+      });
+    }
   }
   
   return obstacles;
