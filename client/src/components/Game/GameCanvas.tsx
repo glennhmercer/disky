@@ -68,11 +68,11 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       // Calculate direction based on aim point with higher sensitivity
       const directionX = (aimDirection.x - startPos.x) * 0.04;
       
-      // Calculate vertical trajectory based on Y aim (inverted: higher = less fall)
+      // Calculate vertical trajectory - frisbees launch upward first, then fall
       const aimY = aimDirection.y;
       const targetY = canvas.height * 0.3;
       const verticalAim = (aimY - targetY) / (canvas.height * 0.5); // Inverted calculation
-      const directionY = -8 + (verticalAim * 6);
+      const directionY = -12 + (verticalAim * 8); // Start with stronger upward velocity
       
       const velocity = {
         x: directionX,
@@ -136,11 +136,11 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       // Use the stored aim direction (same as throwing logic)
       const directionX = (aimDirection.x - startPos.x) * 0.04;
       
-      // Calculate vertical trajectory based on Y aim (inverted: higher = less fall)
+      // Calculate vertical trajectory - frisbees launch upward first, then fall
       const aimY = aimDirection.y;
       const targetY = canvas.height * 0.3;
       const verticalAim = (aimY - targetY) / (canvas.height * 0.5); // Inverted calculation
-      const directionY = -8 + (verticalAim * 6);
+      const directionY = -12 + (verticalAim * 8); // Start with stronger upward velocity
       
       const velocity = {
         x: directionX,
@@ -276,26 +276,38 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         ctx.arc(disc.position.x + 2, disc.position.y + 2, radius, 0, Math.PI * 2);
         ctx.fill();
         
-        // Disc with spin visualization
+        // Calculate tilt angle based on spin (more spin = more tilted appearance)
+        const tiltAngle = disc.spin * 0.8; // Tilt factor
+        
+        // Draw disc as an ellipse to show frisbee-like appearance
+        ctx.save();
+        ctx.translate(disc.position.x, disc.position.y);
+        ctx.rotate(tiltAngle);
+        
+        // Main disc body (flattened ellipse)
         ctx.fillStyle = "#FFD700";
         ctx.beginPath();
-        ctx.arc(disc.position.x, disc.position.y, radius, 0, Math.PI * 2);
+        ctx.ellipse(0, 0, radius, radius * 0.25, 0, 0, Math.PI * 2);
         ctx.fill();
         
-        // Shine effect
-        ctx.fillStyle = "#FFFF00";
+        // Add border
+        ctx.strokeStyle = "#FFA500";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        // Add center rim detail
+        ctx.fillStyle = "#FF8C00";
         ctx.beginPath();
-        ctx.arc(disc.position.x - 1, disc.position.y - 1, radius * 0.4, 0, Math.PI * 2);
+        ctx.ellipse(0, 0, radius * 0.3, radius * 0.08, 0, 0, Math.PI * 2);
         ctx.fill();
         
-        // Show spin direction with small indicator
-        if (Math.abs(disc.spin) > 0.1) {
-          ctx.fillStyle = disc.spin > 0 ? "#00FF00" : "#FF0000";
-          const spinOffset = disc.spin > 0 ? 2 : -2;
-          ctx.beginPath();
-          ctx.arc(disc.position.x + spinOffset, disc.position.y, radius * 0.2, 0, Math.PI * 2);
-          ctx.fill();
-        }
+        // Add shine effect
+        ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+        ctx.beginPath();
+        ctx.ellipse(-radius * 0.3, -radius * 0.1, radius * 0.2, radius * 0.05, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.restore();
         
         // Debug: Show Z-distance
         ctx.fillStyle = "#FFFFFF";

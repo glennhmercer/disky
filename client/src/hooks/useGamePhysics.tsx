@@ -6,8 +6,8 @@ export const useGamePhysics = () => {
     return discs.map(disc => {
       if (!disc.isActive) return disc;
 
-      // Apply gravity (only affects y-axis)
-      const gravity = 0.05;
+      // Apply gravity (only affects y-axis) - lighter for frisbee
+      const gravity = 0.04;
       const newVelocity = {
         x: disc.velocity.x,
         y: disc.velocity.y + gravity,
@@ -64,7 +64,7 @@ export const useGamePhysics = () => {
     const trajectory: Vector2D[] = [];
     let pos = { ...startPos };
     let vel = { ...velocity };
-    const gravity = 0.05;
+    const gravity = 0.04;
     const airResistanceX = 0.9995;
     const airResistanceY = 0.999;
     const airResistanceZ = 0.9998;
