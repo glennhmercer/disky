@@ -6,44 +6,37 @@ export const useGamePhysics = () => {
     return discs.map(disc => {
       if (!disc.isActive) return disc;
 
-      // Apply gravity (only affects y-axis) - lighter for frisbee
-      const gravity = 0.04;
+      // Real frisbee physics - starts with upward velocity, then gravity takes over
+      const gravity = 0.35; // Stronger gravity for realistic arc
+      const airDrag = 0.99; // Air resistance affects all movement
+      
+      // Create new velocity with physics
       const newVelocity = {
-        x: disc.velocity.x,
-        y: disc.velocity.y + gravity,
-        z: disc.velocity.z, // Forward motion
+        x: disc.velocity.x * airDrag,
+        y: disc.velocity.y + gravity, // Gravity pulls down
+        z: disc.velocity.z * airDrag, // Forward motion slows down
       };
 
-      // Apply air resistance differently for each axis
-      const airResistanceX = 0.9995; // Less resistance horizontally
-      const airResistanceY = 0.999; // More resistance vertically  
-      const airResistanceZ = 0.9998; // Minimal resistance forward
-      newVelocity.x *= airResistanceX;
-      newVelocity.y *= airResistanceY;
-      newVelocity.z *= airResistanceZ;
-
-      // Enhanced spin physics for realistic curve (only affects x-axis)
+      // Apply spin effect - creates curve based on Magnus effect
+      const spinStrength = Math.abs(disc.spin) * 0.8;
       const currentSpeed = Math.sqrt(newVelocity.x * newVelocity.x + newVelocity.z * newVelocity.z);
-      const spinForce = disc.spin * Math.max(0.4, currentSpeed * 0.03);
+      const spinEffect = spinStrength * Math.max(0.1, currentSpeed * 0.05);
       
-      // Apply spin only to horizontal movement
-      newVelocity.x += spinForce;
+      // Spin creates horizontal curve (positive spin = right curve, negative = left curve)
+      newVelocity.x += disc.spin > 0 ? spinEffect : -spinEffect;
 
-      // Update 3D position
+      // Update position
       const newPosition = {
         x: disc.position.x + newVelocity.x,
         y: disc.position.y + newVelocity.y,
         z: disc.position.z + newVelocity.z,
       };
 
-      // Check bounds (convert 3D to 2D for screen bounds)
-      const screenX = newPosition.x;
-      const screenY = newPosition.y;
-      
-      if (screenY > window.innerHeight + 50 || 
-          screenX < -50 || 
-          screenX > window.innerWidth + 50 ||
-          newPosition.z > 2000) { // Too far away
+      // Check if disc is out of bounds or hit ground
+      if (newPosition.y > window.innerHeight + 100 || 
+          newPosition.x < -100 || 
+          newPosition.x > window.innerWidth + 100 ||
+          newPosition.z > 1500) {
         return { ...disc, isActive: false };
       }
 
@@ -59,35 +52,28 @@ export const useGamePhysics = () => {
     startPos: Vector3D,
     velocity: Vector3D,
     steps: number,
-    spin: number = 0.2
+    spin: number = 0
   ): Vector2D[] => {
     const trajectory: Vector2D[] = [];
     let pos = { ...startPos };
     let vel = { ...velocity };
-    const gravity = 0.04;
-    const airResistanceX = 0.9995;
-    const airResistanceY = 0.999;
-    const airResistanceZ = 0.9998;
+    const gravity = 0.35;
+    const airDrag = 0.99;
 
     for (let i = 0; i < steps; i++) {
-      // Convert 3D position to 2D screen coordinates (same as disc rendering)
-      const screenX = pos.x;
-      const screenY = pos.y;
+      // Add current position to trajectory
+      trajectory.push({ x: pos.x, y: pos.y });
       
-      trajectory.push({ x: screenX, y: screenY });
-      
-      // Apply 3D physics matching the updateDiscs function exactly
+      // Apply physics - same as updateDiscs
+      vel.x *= airDrag;
       vel.y += gravity;
-      vel.x *= airResistanceX;
-      vel.y *= airResistanceY;
-      vel.z *= airResistanceZ;
+      vel.z *= airDrag;
       
-      // Enhanced spin physics for realistic curve (apply after air resistance)
+      // Apply spin effect
+      const spinStrength = Math.abs(spin) * 0.8;
       const currentSpeed = Math.sqrt(vel.x * vel.x + vel.z * vel.z);
-      const spinForce = spin * Math.max(0.4, currentSpeed * 0.03);
-      
-      // Apply spin only to horizontal movement
-      vel.x += spinForce;
+      const spinEffect = spinStrength * Math.max(0.1, currentSpeed * 0.05);
+      vel.x += spin > 0 ? spinEffect : -spinEffect;
       
       // Update position
       pos.x += vel.x;
@@ -95,10 +81,10 @@ export const useGamePhysics = () => {
       pos.z += vel.z;
       
       // Stop if out of bounds
-      if (pos.y > window.innerHeight + 50 || 
-          pos.x < -50 || 
-          pos.x > window.innerWidth + 50 ||
-          pos.z > 2000) {
+      if (pos.y > window.innerHeight + 100 || 
+          pos.x < -100 || 
+          pos.x > window.innerWidth + 100 ||
+          pos.z > 1500) {
         break;
       }
     }

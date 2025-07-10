@@ -62,32 +62,34 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
       const startPos = { x: canvas.width / 2, y: canvas.height - 50, z: 0 };
       
-      // Calculate 3D velocity with forward (z) component
-      const forwardVelocity = 35;
+      // Realistic frisbee throwing physics - always starts with upward velocity
+      const forwardVelocity = 15; // Forward speed
       
-      // Calculate direction based on aim point with higher sensitivity
-      const directionX = (aimDirection.x - startPos.x) * 0.04;
+      // Calculate horizontal direction based on aim point
+      const horizontalDirection = (aimDirection.x - startPos.x) * 0.02;
       
-      // Calculate vertical trajectory - frisbees launch upward first, then fall
+      // Frisbee always launches upward first, then gravity takes over
+      const baseUpwardVelocity = -8; // Always goes up first
+      
+      // Aim affects the upward angle - higher aim = more upward velocity
       const aimY = aimDirection.y;
-      const targetY = canvas.height * 0.3;
-      const verticalAim = (aimY - targetY) / (canvas.height * 0.5); // Inverted calculation
-      const directionY = -12 + (verticalAim * 8); // Start with stronger upward velocity
+      const verticalAimFactor = Math.max(-2, Math.min(2, (canvas.height * 0.5 - aimY) / canvas.height * 6));
+      const upwardVelocity = baseUpwardVelocity + verticalAimFactor;
       
       const velocity = {
-        x: directionX,
-        y: directionY,
+        x: horizontalDirection,
+        y: upwardVelocity,
         z: forwardVelocity,
       };
 
-      console.log("Throwing disc with velocity:", velocity, "aim:", aimDirection, "verticalAim:", verticalAim, "tiltAmount:", tiltAmount, "spin:", tiltAmount * 2);
+      console.log("Throwing disc with velocity:", velocity, "aim:", aimDirection, "upwardVelocity:", upwardVelocity, "tiltAmount:", tiltAmount, "spin:", tiltAmount * 3);
 
       const newDisc: Disc = {
         id: Date.now().toString(),
         position: { ...startPos },
         velocity: { ...velocity },
         radius: 20,
-        spin: tiltAmount * 2,
+        spin: tiltAmount * 3, // Stronger spin effect
         isActive: true,
       };
 
@@ -131,24 +133,24 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       if (!canvas) return;
 
       const startPos = { x: canvas.width / 2, y: canvas.height - 50, z: 0 };
-      const forwardVelocity = 35;
+      const forwardVelocity = 15;
       
-      // Use the stored aim direction (same as throwing logic)
-      const directionX = (aimDirection.x - startPos.x) * 0.04;
+      // Use the same physics as throwing logic
+      const horizontalDirection = (aimDirection.x - startPos.x) * 0.02;
       
-      // Calculate vertical trajectory - frisbees launch upward first, then fall
+      // Same upward velocity calculation
+      const baseUpwardVelocity = -8;
       const aimY = aimDirection.y;
-      const targetY = canvas.height * 0.3;
-      const verticalAim = (aimY - targetY) / (canvas.height * 0.5); // Inverted calculation
-      const directionY = -12 + (verticalAim * 8); // Start with stronger upward velocity
+      const verticalAimFactor = Math.max(-2, Math.min(2, (canvas.height * 0.5 - aimY) / canvas.height * 6));
+      const upwardVelocity = baseUpwardVelocity + verticalAimFactor;
       
       const velocity = {
-        x: directionX,
-        y: directionY,
+        x: horizontalDirection,
+        y: upwardVelocity,
         z: forwardVelocity,
       };
 
-      const preview = calculateTrajectory(startPos, velocity, 100, tiltAmount * 2);
+      const preview = calculateTrajectory(startPos, velocity, 100, tiltAmount * 3);
       setTrajectoryPreview(preview);
     } else {
       setTrajectoryPreview([]);
@@ -276,35 +278,42 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         ctx.arc(disc.position.x + 2, disc.position.y + 2, radius, 0, Math.PI * 2);
         ctx.fill();
         
-        // Calculate tilt angle based on spin (more spin = more tilted appearance)
-        const tiltAngle = disc.spin * 0.8; // Tilt factor
+        // Calculate tilt and rotation for realistic frisbee appearance
+        const tiltAngle = disc.spin * 0.6; // Tilt based on spin
+        const discFlatness = Math.max(0.15, 0.4 - Math.abs(disc.spin) * 0.3); // More spin = flatter appearance
         
-        // Draw disc as an ellipse to show frisbee-like appearance
+        // Draw disc as a tilted ellipse
         ctx.save();
         ctx.translate(disc.position.x, disc.position.y);
         ctx.rotate(tiltAngle);
         
-        // Main disc body (flattened ellipse)
+        // Main disc body - ellipse that gets flatter with more spin
         ctx.fillStyle = "#FFD700";
         ctx.beginPath();
-        ctx.ellipse(0, 0, radius, radius * 0.25, 0, 0, Math.PI * 2);
+        ctx.ellipse(0, 0, radius, radius * discFlatness, 0, 0, Math.PI * 2);
         ctx.fill();
         
-        // Add border
+        // Outer rim
         ctx.strokeStyle = "#FFA500";
-        ctx.lineWidth = 2;
+        ctx.lineWidth = Math.max(1, 3 * perspective);
         ctx.stroke();
         
-        // Add center rim detail
+        // Inner rim detail
         ctx.fillStyle = "#FF8C00";
         ctx.beginPath();
-        ctx.ellipse(0, 0, radius * 0.3, radius * 0.08, 0, 0, Math.PI * 2);
+        ctx.ellipse(0, 0, radius * 0.4, radius * discFlatness * 0.4, 0, 0, Math.PI * 2);
         ctx.fill();
         
-        // Add shine effect
-        ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+        // Center dot
+        ctx.fillStyle = "#CC6600";
         ctx.beginPath();
-        ctx.ellipse(-radius * 0.3, -radius * 0.1, radius * 0.2, radius * 0.05, 0, 0, Math.PI * 2);
+        ctx.ellipse(0, 0, radius * 0.1, radius * discFlatness * 0.1, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Highlight to show 3D effect
+        ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
+        ctx.beginPath();
+        ctx.ellipse(-radius * 0.2, -radius * discFlatness * 0.3, radius * 0.15, radius * discFlatness * 0.15, 0, 0, Math.PI * 2);
         ctx.fill();
         
         ctx.restore();
