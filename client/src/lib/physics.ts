@@ -1,4 +1,4 @@
-// New physics engine based on step-by-step redesign
+// Updated physics engine for 2-axis tilt and realistic disc behavior
 export interface Vector2 {
   x: number;
   y: number;
@@ -11,12 +11,11 @@ export interface PhysicsDisc {
   isActive: boolean;
 }
 
-// Physics constants
-const BASE_SPEED = 300; // pixels per second (dramatically increased)
-const CURVE_FACTOR = 2.0; // How much tilt affects curve (increased for visibility)
-const DRAG = 0.05; // Air resistance to balance faster throws
+const BASE_SPEED = 300;
+const CURVE_FACTOR = 2.0;
+const DRAG = 0.05;
+const MIN_SPEED = 0.5;
 
-// Vector math utilities
 export function normalize(vec: Vector2): Vector2 {
   const mag = magnitude(vec);
   if (mag === 0) return { x: 0, y: 0 };
@@ -28,8 +27,11 @@ export function magnitude(vec: Vector2): number {
 }
 
 export function rotate90(vec: Vector2): Vector2 {
-  // Rotate vector 90 degrees clockwise
   return { x: vec.y, y: -vec.x };
+}
+
+export function rotateNegative90(vec: Vector2): Vector2 {
+  return { x: -vec.y, y: vec.x };
 }
 
 export function scale(vec: Vector2, scalar: number): Vector2 {
@@ -40,56 +42,46 @@ export function add(vec1: Vector2, vec2: Vector2): Vector2 {
   return { x: vec1.x + vec2.x, y: vec1.y + vec2.y };
 }
 
-// STEP 3: Velocity Initialization
 export function initializeVelocity(direction: Vector2, strength: number = 1.0): Vector2 {
   const throwSpeed = BASE_SPEED * strength;
   return scale(normalize(direction), throwSpeed);
 }
 
-// STEP 4: Curved Force Function
-export function curvedForce(tilt: number, velocity: Vector2): Vector2 {
+// TiltX = sideways tilt; TiltY = forward/backward tilt
+export function curvedForce(tiltX: number, tiltY: number, velocity: Vector2): Vector2 {
   const speed = magnitude(velocity);
-  const perpendicular = rotate90(velocity);
-  
-  // Curve strength grows with speed and tilt
-  const curveStrength = tilt * speed * CURVE_FACTOR;
-  
-  return scale(normalize(perpendicular), curveStrength);
+  const lateral = rotate90(velocity);
+  const vertical = rotateNegative90(velocity);
+
+  const lateralForce = scale(normalize(lateral), tiltX * speed * CURVE_FACTOR);
+  const verticalForce = scale(normalize(vertical), tiltY * speed * CURVE_FACTOR);
+
+  return add(lateralForce, verticalForce);
 }
 
-// STEP 2: Time-Based Motion Update
-export function updateDisc(disc: PhysicsDisc, tilt: number, deltaTime: number): PhysicsDisc {
+export function updateDisc(disc: PhysicsDisc, tiltX: number, tiltY: number, deltaTime: number): PhysicsDisc {
   if (!disc.isActive) return disc;
-  
-  // Ensure deltaTime is in seconds (convert from milliseconds if needed)
+
   const dt = deltaTime > 1 ? deltaTime / 1000 : deltaTime;
   
-  // Apply curved force
-  const curveForce = curvedForce(tilt, disc.velocity);
-  const acceleration = scale(curveForce, dt);
-  
-  // Update velocity with curve
+  const curve = curvedForce(tiltX, tiltY, disc.velocity);
+  const acceleration = scale(curve, dt);
+
   const newVelocity = add(disc.velocity, acceleration);
-  
-  // Apply drag
-  const dragMultiplier = 1 - DRAG * dt;
-  const velocityWithDrag = scale(newVelocity, dragMultiplier);
-  
-  // Add minimum velocity threshold
-  if (magnitude(velocityWithDrag) < 0.5) {
-    return { ...disc, isActive: false }; // Stop disc
-  }
-  
-  // Move position
+  const velocityWithDrag = scale(newVelocity, 1 - DRAG * dt);
   const newPosition = add(disc.position, scale(velocityWithDrag, dt));
-  
+
+  if (magnitude(velocityWithDrag) < MIN_SPEED) {
+    return { ...disc, isActive: false };
+  }
+
   // Check bounds - deactivate if disc goes too far off screen
   const isOutOfBounds = 
     newPosition.x < -200 || 
     newPosition.x > window.innerWidth + 200 ||
     newPosition.y < -200 || 
     newPosition.y > window.innerHeight + 200;
-  
+
   return {
     ...disc,
     velocity: velocityWithDrag,
@@ -102,7 +94,8 @@ export function updateDisc(disc: PhysicsDisc, tilt: number, deltaTime: number): 
 export function predictTrajectory(
   startPos: Vector2,
   initialVelocity: Vector2,
-  tilt: number,
+  tiltX: number,
+  tiltY: number,
   steps: number = 60,
   stepSize: number = 1/60 // 60 FPS
 ): Vector2[] {
@@ -117,7 +110,7 @@ export function predictTrajectory(
   
   for (let i = 0; i < steps; i++) {
     trajectory.push({ ...disc.position });
-    disc = updateDisc(disc, tilt, stepSize);
+    disc = updateDisc(disc, tiltX, tiltY, stepSize);
     
     // Stop if disc goes off screen or slows down too much
     if (magnitude(disc.velocity) < 0.5 || 

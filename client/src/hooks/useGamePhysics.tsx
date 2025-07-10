@@ -47,10 +47,11 @@ export const useGamePhysics = () => {
       // Convert to physics disc
       const physicsDisc = convertToPhysicsDisc(disc);
       
-      // Update using new physics system with tilt from spin
+      // Update using new 2-axis physics system 
       const deltaTime = 1/60; // 60 FPS
-      const tilt = disc.spin; // Use spin as tilt
-      const updatedPhysicsDisc = updateDisc(physicsDisc, tilt, deltaTime);
+      const tiltX = disc.spin; // Use spin as lateral tilt
+      const tiltY = 0; // No vertical tilt for now
+      const updatedPhysicsDisc = updateDisc(physicsDisc, tiltX, tiltY, deltaTime);
       
       // Convert back to old format
       return convertFromPhysicsDisc(updatedPhysicsDisc, disc);
@@ -107,7 +108,8 @@ export const useGamePhysics = () => {
     const startPos2D: Vector2 = { x: startPos.x, y: startPos.y };
     const velocity2D: Vector2 = { x: velocity.x, y: velocity.y };
     
-    const trajectory = predictTrajectory(startPos2D, velocity2D, spin, steps);
+    // Use spin as tiltX, no tiltY for now
+    const trajectory = predictTrajectory(startPos2D, velocity2D, spin, 0, steps);
     
     // Convert to old format
     return trajectory.map(pos => ({ x: pos.x, y: pos.y }));
