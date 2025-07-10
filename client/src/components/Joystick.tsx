@@ -14,18 +14,19 @@ export const Joystick: React.FC<JoystickProps> = ({ onTiltChange }) => {
   }, []);
 
   const handleMove = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
     const touch = "touches" in e ? e.touches[0] : e;
     const rect = containerRef.current?.getBoundingClientRect();
     if (!rect) return;
 
     const dx = touch.clientX - rect.left - center.x;
     const dy = touch.clientY - rect.top - center.y;
-    const radius = Math.sqrt(dx * dx + dy * dy);
     const maxRadius = rect.width / 2;
 
     const normX = Math.max(-1, Math.min(1, dx / maxRadius));
     const normY = Math.max(-1, Math.min(1, dy / maxRadius));
 
+    console.log("Joystick moved - tiltX:", normX, "tiltY:", normY);
     onTiltChange(normX, normY);
   };
 
@@ -33,10 +34,15 @@ export const Joystick: React.FC<JoystickProps> = ({ onTiltChange }) => {
     <div
       ref={containerRef}
       onMouseMove={handleMove}
+      onMouseDown={handleMove}
       onTouchMove={handleMove}
-      className="absolute bottom-4 left-4 w-24 h-24 rounded-full bg-gray-800 bg-opacity-50 touch-none"
+      onTouchStart={handleMove}
+      className="absolute bottom-4 left-4 w-24 h-24 rounded-full bg-gray-800 bg-opacity-50 touch-none z-50 cursor-pointer"
+      style={{ touchAction: 'none' }}
     >
-      <div className="w-full h-full border-2 border-white rounded-full pointer-events-none"></div>
+      <div className="w-full h-full border-2 border-white rounded-full pointer-events-none flex items-center justify-center">
+        <div className="w-2 h-2 bg-white rounded-full"></div>
+      </div>
     </div>
   );
 };

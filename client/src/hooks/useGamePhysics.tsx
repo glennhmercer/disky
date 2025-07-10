@@ -103,13 +103,14 @@ export const useGamePhysics = () => {
     startPos: { x: number; y: number; z: number },
     velocity: { x: number; y: number; z: number },
     steps: number,
-    spin: number
+    spin: number,
+    tiltY: number = 0
   ): Vector2D[] => {
     const startPos2D: Vector2 = { x: startPos.x, y: startPos.y };
     const velocity2D: Vector2 = { x: velocity.x, y: velocity.y };
     
-    // Use spin as tiltX, no tiltY for now
-    const trajectory = predictTrajectory(startPos2D, velocity2D, spin, 0, steps);
+    // Use both tiltX (spin) and tiltY
+    const trajectory = predictTrajectory(startPos2D, velocity2D, spin, tiltY, steps);
     
     // Convert to old format
     return trajectory.map(pos => ({ x: pos.x, y: pos.y }));

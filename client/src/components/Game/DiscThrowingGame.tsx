@@ -68,6 +68,7 @@ const DiscThrowingGame: React.FC = () => {
   }, [playHit]);
 
   const handleTiltChange = useCallback((tiltX: number, tiltY: number) => {
+    console.log("Game received tilt change - tiltX:", tiltX, "tiltY:", tiltY);
     setCurrentTilt({ x: tiltX, y: tiltY });
   }, []);
 
