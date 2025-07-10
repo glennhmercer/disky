@@ -1,0 +1,96 @@
+🧱 Step-by-Step Physics Redesign for Disc-Throwing Game
+STEP 1: Define Core Inputs
+You’ve already done this intuitively — we’ll formalize it:
+
+Direction Vector dir = (dx, dy)
+
+The horizontal aim direction of the throw.
+
+In 2D: this is a normalized vector from the player to the aim point.
+
+Tilt tilt = -1 to +1
+
+Represents disc "banking" left or right.
+
+-1 = max left curve, 0 = flat, +1 = max right curve.
+
+STEP 2: Simulate Time-Based Motion
+We'll model disc motion as time-based steps.
+
+Each frame:
+
+ts
+Copy
+Edit
+position += velocity * deltaTime
+velocity += curvedForce(tilt, velocity) * deltaTime
+STEP 3: Velocity Initialization
+Set the initial velocity based on direction and throw strength:
+
+ts
+Copy
+Edit
+const throwSpeed = BASE_SPEED * strength; // e.g. strength = 0.5 to 1.5
+velocity = normalize(dir) * throwSpeed;
+STEP 4: Curved Force Function
+Simulate aerodynamic curve using lift (caused by tilt):
+
+ts
+Copy
+Edit
+function curvedForce(tilt: number, velocity: Vector2): Vector2 {
+  const speed = magnitude(velocity);
+  const perpendicular = rotate90(velocity); // Rotate vector 90 degrees clockwise
+
+  // Curve strength grows with speed and tilt
+  const curveStrength = tilt * speed * CURVE_FACTOR;
+
+  return normalize(perpendicular) * curveStrength;
+}
+🔁 rotate90(vec) rotates (x, y) into (y, -x) or (-y, x) depending on curve direction.
+
+STEP 5: Drag + Deceleration
+Add basic air resistance so the disc slows over time.
+
+ts
+Copy
+Edit
+const DRAG = 0.05;
+velocity *= (1 - DRAG * deltaTime);
+Optional: Add lift drop-off if you want curve to flatten at lower speeds.
+
+STEP 6: Obstacle and Collision Logic
+Model obstacles as bounding boxes or polygons. Each frame:
+
+Check for intersection between disc path and obstacle
+
+Reflect or stop based on collision rules
+
+Same for target detection
+
+STEP 7: Visualization + Debug Layer
+Add a debug mode that shows:
+
+Initial vector
+
+Curved trajectory prediction (using ghost path preview)
+
+Tilt indicator
+This helps you tune physics without shooting blindly.
+
+STEP 8: Optional Enhancements
+Vertical lift / drop-off: Add small z-gravity to simulate arc drop.
+
+Wind: Add a global directional force vector.
+
+Multi-layer obstacles: For 2.5D feel (like aiming over vs. around).
+
+🧠 Optimization Principles
+Use a vector library for 2D math (or I can provide one).
+
+Keep physics in a single updateDisc(dt) function.
+
+Separate rendering logic from physics.
+
+Let the tilt and direction be controllable via input for testing.
+

@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useCallback, useState } from "react";
 import { useGamePhysics } from "../../hooks/useGamePhysics";
 import { Target, Obstacle, Disc, Vector2D, Vector3D } from "../../lib/gameTypes";
+import { normalize } from "../../lib/physics";
 
 interface GameCanvasProps {
   targets: Target[];
@@ -26,7 +27,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const [crosshairPosition, setCrosshairPosition] = useState<Vector2D>({ x: 0, y: 0 });
   const [tiltCenterX, setTiltCenterX] = useState(0);
 
-  const { updateDiscs, calculateTrajectory, checkCollisions } = useGamePhysics();
+  const { updateDiscs, calculateTrajectory, checkCollisions, createInitialVelocity } = useGamePhysics();
 
   // Handle mouse movement for crosshair
   const handleMouseMove = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
@@ -56,40 +57,36 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       setTiltCenterX(aimDirection.x); // Store the first click position as tilt center
       setControlStage("tilt");
     } else if (controlStage === "tilt") {
-      // Throw disc immediately with current tilt amount
+      // Throw disc using new physics system
       const canvas = canvasRef.current;
       if (!canvas) return;
 
       const startPos = { x: canvas.width / 2, y: canvas.height - 50, z: 0 };
       
-      // Realistic frisbee throwing physics - always starts with upward velocity
-      const forwardVelocity = 7.5; // Forward speed (50% slower)
+      // STEP 1: Define direction vector from start to aim point
+      const direction = {
+        x: aimDirection.x - startPos.x,
+        y: aimDirection.y - startPos.y
+      };
       
-      // Calculate horizontal direction based on aim point
-      const horizontalDirection = (aimDirection.x - startPos.x) * 0.01; // 50% slower
-      
-      // Frisbee always launches upward first, then gravity takes over
-      const baseUpwardVelocity = -16; // Much stronger upward velocity to span screen
-      
-      // Aim affects the upward angle - higher aim = more upward velocity
-      const aimY = aimDirection.y;
-      const verticalAimFactor = Math.max(-4, Math.min(4, (canvas.height * 0.5 - aimY) / canvas.height * 12));
-      const upwardVelocity = baseUpwardVelocity + verticalAimFactor;
+      // STEP 3: Initialize velocity based on direction and throw strength
+      const throwStrength = 1.0; // Can be adjusted for power control
+      const initialVelocity = createInitialVelocity(direction, throwStrength);
       
       const velocity = {
-        x: horizontalDirection,
-        y: upwardVelocity,
-        z: forwardVelocity,
+        x: initialVelocity.x,
+        y: initialVelocity.y,
+        z: 0, // Keep z for compatibility but new physics is 2D
       };
 
-      console.log("Throwing disc with velocity:", velocity, "aim:", aimDirection, "upwardVelocity:", upwardVelocity, "tiltAmount:", tiltAmount, "spin:", tiltAmount * 3);
+      console.log("Throwing disc with NEW PHYSICS:", velocity, "direction:", direction, "tiltAmount:", tiltAmount);
 
       const newDisc: Disc = {
         id: Date.now().toString(),
         position: { ...startPos },
         velocity: { ...velocity },
         radius: 20,
-        spin: tiltAmount * 3, // Stronger spin effect
+        spin: tiltAmount, // Tilt amount directly maps to spin (-1 to +1)
         isActive: true,
       };
 
@@ -135,22 +132,22 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       const startPos = { x: canvas.width / 2, y: canvas.height - 50, z: 0 };
       const forwardVelocity = 7.5;
       
-      // Use the same physics as throwing logic
-      const horizontalDirection = (aimDirection.x - startPos.x) * 0.01;
+      // Use the same direction calculation as throwing
+      const direction = {
+        x: aimDirection.x - startPos.x,
+        y: aimDirection.y - startPos.y
+      };
       
-      // Same upward velocity calculation
-      const baseUpwardVelocity = -16;
-      const aimY = aimDirection.y;
-      const verticalAimFactor = Math.max(-4, Math.min(4, (canvas.height * 0.5 - aimY) / canvas.height * 12));
-      const upwardVelocity = baseUpwardVelocity + verticalAimFactor;
+      const throwStrength = 1.0;
+      const initialVelocity = createInitialVelocity(direction, throwStrength);
       
       const velocity = {
-        x: horizontalDirection,
-        y: upwardVelocity,
-        z: forwardVelocity,
+        x: initialVelocity.x,
+        y: initialVelocity.y,
+        z: 0,
       };
 
-      const preview = calculateTrajectory(startPos, velocity, 100, tiltAmount * 3);
+      const preview = calculateTrajectory(startPos, velocity, 100, tiltAmount);
       setTrajectoryPreview(preview);
     } else {
       setTrajectoryPreview([]);
