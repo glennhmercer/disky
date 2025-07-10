@@ -86,7 +86,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         id: Date.now().toString(),
         position: { ...startPos },
         velocity: { ...velocity },
-        radius: 8,
+        radius: 20,
         spin: tiltAmount * 2,
         isActive: true,
       };
