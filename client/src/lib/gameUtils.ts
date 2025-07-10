@@ -26,16 +26,25 @@ export const generateSingleTarget = (level: number): Target => {
   const canvasWidth = window.innerWidth || 1200;
   const canvasHeight = window.innerHeight || 800;
   
-  // Position targets in reachable distance for 3D physics
-  const x = Math.random() * (canvasWidth * 0.6) + (canvasWidth * 0.2); // Center 60% of screen
-  const y = Math.random() * (canvasHeight * 0.4) + (canvasHeight * 0.1); // Upper 40% of screen
+  // Throwing position is at bottom center
+  const throwingX = canvasWidth / 2;
+  const throwingY = canvasHeight - 50;
+  
+  // Target area is in the upper portion of the screen
+  const targetAreaX = Math.random() * (canvasWidth * 0.6) + (canvasWidth * 0.2); // Center 60% of screen
+  const targetAreaY = Math.random() * (canvasHeight * 0.4) + (canvasHeight * 0.1); // Upper 40% of screen
+  
+  // Position target between 35% and 85% of the distance from throwing position to target area
+  const distancePercent = 0.35 + Math.random() * 0.5; // Random between 35% and 85%
+  const targetX = throwingX + (targetAreaX - throwingX) * distancePercent;
+  const targetY = throwingY + (targetAreaY - throwingY) * distancePercent;
   
   // Smaller targets at higher levels
   const radius = Math.max(15, 35 - (level * 2));
   
   return {
     id: `target-level-${level}`,
-    position: { x, y },
+    position: { x: targetX, y: targetY },
     radius,
     isHit: false,
   };
