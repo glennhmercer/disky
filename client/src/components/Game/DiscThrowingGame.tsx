@@ -21,7 +21,12 @@ const DiscThrowingGame: React.FC = () => {
     if (phase === "ready") {
       const newTarget = generateSingleTarget(level);
       setTargets([newTarget]);
-      setObstacles([]); // No obstacles in Duck Hunt style gameplay
+      
+      // Add obstacles at higher levels - start with 1 obstacle at level 2
+      const obstacleCount = Math.max(0, level - 1);
+      const newObstacles = generateObstacles(obstacleCount);
+      setObstacles(newObstacles);
+      
       if (level === 1) {
         setScore(0);
       }
@@ -66,12 +71,13 @@ const DiscThrowingGame: React.FC = () => {
         <div className="text-center">
           <h1 className="text-4xl font-bold text-white mb-4">Disc Hunt</h1>
           <p className="text-xl text-white mb-6">
-            Duck Hunt style disc throwing! Hit targets one at a time across levels.
+            Duck Hunt style disc throwing! Hit targets while avoiding obstacles.
           </p>
           <div className="text-white mb-8">
             <p className="mb-2">🎯 Step 1: Click to set throwing direction</p>
             <p className="mb-2">🥏 Step 2: Tilt left/right to curve disc</p>
             <p className="mb-2">🎮 Each level has one target to hit</p>
+            <p className="mb-2">🚧 Obstacles appear at higher levels</p>
           </div>
           <button
             onClick={handleStartGame}

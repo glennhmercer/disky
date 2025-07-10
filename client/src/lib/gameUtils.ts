@@ -55,16 +55,26 @@ export const generateObstacles = (count: number): Obstacle[] => {
   const canvasWidth = window.innerWidth || 1200;
   const canvasHeight = window.innerHeight || 800;
   
+  // Throwing position is at bottom center
+  const throwingX = canvasWidth / 2;
+  const throwingY = canvasHeight - 50;
+  
   for (let i = 0; i < count; i++) {
-    // Keep obstacles in the upper 60% of screen to avoid blocking throwing zone
-    const x = Math.random() * (canvasWidth - 300) + 150;
-    const y = Math.random() * (canvasHeight * 0.6) + 50; // Upper 60% only
+    // Obstacle area is in the upper portion of the screen
+    const obstacleAreaX = Math.random() * (canvasWidth - 300) + 150;
+    const obstacleAreaY = Math.random() * (canvasHeight * 0.6) + 50; // Upper 60% only
+    
+    // Position obstacle between 35% and 85% of the distance from throwing position to obstacle area
+    const distancePercent = 0.35 + Math.random() * 0.5; // Random between 35% and 85%
+    const obstacleX = throwingX + (obstacleAreaX - throwingX) * distancePercent;
+    const obstacleY = throwingY + (obstacleAreaY - throwingY) * distancePercent;
+    
     const width = 50 + Math.random() * 100;
     const height = 80 + Math.random() * 120;
     
     obstacles.push({
       id: `obstacle-${i}`,
-      position: { x, y },
+      position: { x: obstacleX, y: obstacleY },
       width,
       height,
     });
