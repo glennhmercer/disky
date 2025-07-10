@@ -12,9 +12,9 @@ export interface PhysicsDisc {
 }
 
 // Physics constants
-const BASE_SPEED = 8; // pixels per frame (balanced speed)
-const CURVE_FACTOR = 0.3; // How much tilt affects curve (reduced for subtlety)
-const DRAG = 0.003; // Very low air resistance for longer throws
+const BASE_SPEED = 300; // pixels per second (dramatically increased)
+const CURVE_FACTOR = 2.0; // How much tilt affects curve (increased for visibility)
+const DRAG = 0.05; // Air resistance to balance faster throws
 
 // Vector math utilities
 export function normalize(vec: Vector2): Vector2 {
@@ -61,30 +61,39 @@ export function curvedForce(tilt: number, velocity: Vector2): Vector2 {
 export function updateDisc(disc: PhysicsDisc, tilt: number, deltaTime: number): PhysicsDisc {
   if (!disc.isActive) return disc;
   
+  // Ensure deltaTime is in seconds (convert from milliseconds if needed)
+  const dt = deltaTime > 1 ? deltaTime / 1000 : deltaTime;
+  
   // Apply curved force
   const curveForce = curvedForce(tilt, disc.velocity);
+  const acceleration = scale(curveForce, dt);
   
-  // Update velocity with curve force
-  const newVelocity = add(disc.velocity, scale(curveForce, deltaTime));
+  // Update velocity with curve
+  const newVelocity = add(disc.velocity, acceleration);
   
-  // STEP 5: Apply drag
-  const draggedVelocity = scale(newVelocity, 1 - DRAG * deltaTime);
+  // Apply drag
+  const dragMultiplier = 1 - DRAG * dt;
+  const velocityWithDrag = scale(newVelocity, dragMultiplier);
   
-  // Update position
-  const newPosition = add(disc.position, scale(draggedVelocity, deltaTime));
+  // Add minimum velocity threshold
+  if (magnitude(velocityWithDrag) < 0.5) {
+    return { ...disc, isActive: false }; // Stop disc
+  }
+  
+  // Move position
+  const newPosition = add(disc.position, scale(velocityWithDrag, dt));
   
   // Check bounds - deactivate if disc goes too far off screen
   const isOutOfBounds = 
     newPosition.x < -200 || 
     newPosition.x > window.innerWidth + 200 ||
     newPosition.y < -200 || 
-    newPosition.y > window.innerHeight + 200 ||
-    magnitude(draggedVelocity) < 0.5; // Stop if moving too slowly
+    newPosition.y > window.innerHeight + 200;
   
   return {
     ...disc,
+    velocity: velocityWithDrag,
     position: newPosition,
-    velocity: draggedVelocity,
     isActive: !isOutOfBounds,
   };
 }
