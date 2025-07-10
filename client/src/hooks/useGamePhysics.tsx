@@ -7,8 +7,8 @@ export const useGamePhysics = () => {
       if (!disc.isActive) return disc;
 
       // Real frisbee physics - starts with upward velocity, then gravity takes over
-      const gravity = 0.35; // Stronger gravity for realistic arc
-      const airDrag = 0.99; // Air resistance affects all movement
+      const gravity = 0.175; // Reduced gravity (50% slower)
+      const airDrag = 0.995; // Slightly more air resistance for slower movement
       
       // Create new velocity with physics
       const newVelocity = {
@@ -57,8 +57,8 @@ export const useGamePhysics = () => {
     const trajectory: Vector2D[] = [];
     let pos = { ...startPos };
     let vel = { ...velocity };
-    const gravity = 0.35;
-    const airDrag = 0.99;
+    const gravity = 0.175;
+    const airDrag = 0.995;
 
     for (let i = 0; i < steps; i++) {
       // Add current position to trajectory

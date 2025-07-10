@@ -63,17 +63,17 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       const startPos = { x: canvas.width / 2, y: canvas.height - 50, z: 0 };
       
       // Realistic frisbee throwing physics - always starts with upward velocity
-      const forwardVelocity = 15; // Forward speed
+      const forwardVelocity = 7.5; // Forward speed (50% slower)
       
       // Calculate horizontal direction based on aim point
-      const horizontalDirection = (aimDirection.x - startPos.x) * 0.02;
+      const horizontalDirection = (aimDirection.x - startPos.x) * 0.01; // 50% slower
       
       // Frisbee always launches upward first, then gravity takes over
-      const baseUpwardVelocity = -8; // Always goes up first
+      const baseUpwardVelocity = -16; // Much stronger upward velocity to span screen
       
       // Aim affects the upward angle - higher aim = more upward velocity
       const aimY = aimDirection.y;
-      const verticalAimFactor = Math.max(-2, Math.min(2, (canvas.height * 0.5 - aimY) / canvas.height * 6));
+      const verticalAimFactor = Math.max(-4, Math.min(4, (canvas.height * 0.5 - aimY) / canvas.height * 12));
       const upwardVelocity = baseUpwardVelocity + verticalAimFactor;
       
       const velocity = {
@@ -133,15 +133,15 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       if (!canvas) return;
 
       const startPos = { x: canvas.width / 2, y: canvas.height - 50, z: 0 };
-      const forwardVelocity = 15;
+      const forwardVelocity = 7.5;
       
       // Use the same physics as throwing logic
-      const horizontalDirection = (aimDirection.x - startPos.x) * 0.02;
+      const horizontalDirection = (aimDirection.x - startPos.x) * 0.01;
       
       // Same upward velocity calculation
-      const baseUpwardVelocity = -8;
+      const baseUpwardVelocity = -16;
       const aimY = aimDirection.y;
-      const verticalAimFactor = Math.max(-2, Math.min(2, (canvas.height * 0.5 - aimY) / canvas.height * 6));
+      const verticalAimFactor = Math.max(-4, Math.min(4, (canvas.height * 0.5 - aimY) / canvas.height * 12));
       const upwardVelocity = baseUpwardVelocity + verticalAimFactor;
       
       const velocity = {
