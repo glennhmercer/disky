@@ -12,9 +12,9 @@ export interface PhysicsDisc {
 }
 
 // Physics constants
-const BASE_SPEED = 15; // pixels per frame (much slower for game feel)
-const CURVE_FACTOR = 2.0; // How much tilt affects curve
-const DRAG = 0.02; // Air resistance (much lower for slower deceleration)
+const BASE_SPEED = 8; // pixels per frame (balanced speed)
+const CURVE_FACTOR = 0.3; // How much tilt affects curve (reduced for subtlety)
+const DRAG = 0.003; // Very low air resistance for longer throws
 
 // Vector math utilities
 export function normalize(vec: Vector2): Vector2 {
@@ -73,10 +73,19 @@ export function updateDisc(disc: PhysicsDisc, tilt: number, deltaTime: number): 
   // Update position
   const newPosition = add(disc.position, scale(draggedVelocity, deltaTime));
   
+  // Check bounds - deactivate if disc goes too far off screen
+  const isOutOfBounds = 
+    newPosition.x < -200 || 
+    newPosition.x > window.innerWidth + 200 ||
+    newPosition.y < -200 || 
+    newPosition.y > window.innerHeight + 200 ||
+    magnitude(draggedVelocity) < 0.5; // Stop if moving too slowly
+  
   return {
     ...disc,
     position: newPosition,
     velocity: draggedVelocity,
+    isActive: !isOutOfBounds,
   };
 }
 
@@ -102,7 +111,9 @@ export function predictTrajectory(
     disc = updateDisc(disc, tilt, stepSize);
     
     // Stop if disc goes off screen or slows down too much
-    if (magnitude(disc.velocity) < 10) break;
+    if (magnitude(disc.velocity) < 0.5 || 
+        disc.position.x < -200 || disc.position.x > window.innerWidth + 200 ||
+        disc.position.y < -200 || disc.position.y > window.innerHeight + 200) break;
   }
   
   return trajectory;
