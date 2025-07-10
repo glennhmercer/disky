@@ -32,6 +32,7 @@ export interface Obstacle extends GameObject {
 export interface Disc extends GameObject3D {
   velocity: Vector3D;
   radius: number;
-  spin: number;
+  spin: number; // tiltX (lateral tilt)
+  tiltY?: number; // optional tiltY (vertical tilt)
   isActive: boolean;
 }

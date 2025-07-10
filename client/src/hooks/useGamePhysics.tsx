@@ -50,7 +50,7 @@ export const useGamePhysics = () => {
       // Update using new 2-axis physics system 
       const deltaTime = 1/60; // 60 FPS
       const tiltX = disc.spin; // Use spin as lateral tilt
-      const tiltY = 0; // No vertical tilt for now
+      const tiltY = disc.tiltY || 0; // Use tiltY if available, otherwise 0
       const updatedPhysicsDisc = updateDisc(physicsDisc, tiltX, tiltY, deltaTime);
       
       // Convert back to old format
