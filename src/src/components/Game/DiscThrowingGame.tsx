@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect, useMemo } from "react";
 import GameCanvas from "./GameCanvas";
+import { useLayoutManager } from "../../hooks/useLayoutManager";
 import GameUI from "./GameUI";
 import { Joystick } from "../Joystick";
 import { useGame } from "../../lib/stores/useGame";
@@ -10,6 +11,7 @@ import { generateSingleTarget, generateObstacles } from "../../lib/gameUtils";
 const DiscThrowingGame: React.FC = () => {
   const { phase, start, restart, end } = useGame();
   const { playHit, playSuccess } = useAudio();
+  const { width, height } = useLayoutManager();
   
   const [score, setScore] = useState(0);
   const [level, setLevel] = useState(1);
@@ -115,15 +117,19 @@ const DiscThrowingGame: React.FC = () => {
   }
 
   return (
-    <div className="w-full h-full relative">
-      <GameCanvas
-        targets={targets}
-        obstacles={obstacles}
-        onTargetHit={handleTargetHit}
-        onObstacleHit={handleObstacleHit}
-        currentTilt={currentTilt}
-      />
-      <GameUI score={score} level={level} targetHit={targetHit} />
+    <div className="w-full h-full relative flex items-center justify-center overflow-hidden">
+      <div style={{ width, height }} className="relative">
+        <GameCanvas
+          targets={targets}
+          obstacles={obstacles}
+          onTargetHit={handleTargetHit}
+          onObstacleHit={handleObstacleHit}
+          currentTilt={currentTilt}
+          width={width}
+          height={height}
+        />
+        <GameUI score={score} level={level} targetHit={targetHit} />
+      </div>
       <Joystick onTiltChange={handleTiltChange} />
     </div>
   );
