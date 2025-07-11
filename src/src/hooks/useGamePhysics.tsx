@@ -1,14 +1,14 @@
 import { useCallback } from 'react';
 import type { Disc, Target, Obstacle, Vector2D } from '../lib/gameTypes';
-import { 
-  PhysicsDisc, 
-  Vector2, 
-  updateDisc, 
-  checkCollision, 
-  checkTargetHit, 
+import {
+  type PhysicsDisc,
+  type Vector2,
+  updateDisc,
+  checkCollision,
+  checkTargetHit,
   predictTrajectory,
   initializeVelocity,
-  normalize
+  normalize,
 } from '../lib/physics';
 
 export const useGamePhysics = () => {
