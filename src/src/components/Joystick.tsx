@@ -32,6 +32,8 @@ export const Joystick: React.FC<JoystickProps> = ({ onTiltChange }) => {
 
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     e.preventDefault();
+    // ensure we keep receiving move events even when leaving the element
+    e.currentTarget.setPointerCapture(e.pointerId);
     setDragging(true);
     const tilt = calculateTilt(e.clientX, e.clientY);
     if (tilt) {
@@ -48,8 +50,12 @@ export const Joystick: React.FC<JoystickProps> = ({ onTiltChange }) => {
     }
   };
 
-  const handlePointerUp = () => {
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    // release capture so future interactions behave normally
+    e.currentTarget.releasePointerCapture(e.pointerId);
     setDragging(false);
+    // reset tilt when the joystick is released
+    onTiltChange(0, 0);
   };
 
   return (
