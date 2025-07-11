@@ -50,7 +50,6 @@ export const Joystick: React.FC<JoystickProps> = ({ onTiltChange }) => {
 
   const handlePointerUp = () => {
     setDragging(false);
-    onTiltChange(0, 0);
   };
 
   return (
