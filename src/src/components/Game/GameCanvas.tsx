@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useCallback, useState } from "react";
 import { useGamePhysics } from "../../hooks/useGamePhysics";
-import { Target, Obstacle, Disc, Vector2D, Vector3D } from "../../lib/gameTypes";
+import type { Target, Obstacle, Disc, Vector2D, Vector3D } from "../../lib/gameTypes";
 import { normalize } from "../../lib/physics";
 
 interface GameCanvasProps {

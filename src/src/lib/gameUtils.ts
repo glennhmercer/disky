@@ -1,4 +1,4 @@
-import { Target, Obstacle } from "./gameTypes";
+import type { Target, Obstacle } from "./gameTypes";
 
 export const generateTargets = (count: number): Target[] => {
   const targets: Target[] = [];
