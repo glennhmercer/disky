@@ -12,6 +12,9 @@
     "verbatimModuleSyntax": true,
     "moduleDetection": "force",
     "noEmit": true,
+    "paths": {
+      "lucide-react": ["./src/lucide-react.tsx"]
+    },
 
     /* Linting */
     "strict": true,
