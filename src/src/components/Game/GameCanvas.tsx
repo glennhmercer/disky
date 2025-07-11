@@ -9,6 +9,8 @@ interface GameCanvasProps {
   onTargetHit: (targetId: string) => void;
   onObstacleHit: () => void;
   currentTilt: { x: number; y: number };
+  width: number;
+  height: number;
 }
 
 type ControlStage = "direction" | "tilt" | "thrown";
@@ -19,6 +21,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   onTargetHit,
   onObstacleHit,
   currentTilt,
+  width,
+  height,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [discs, setDiscs] = useState<Disc[]>([]);
@@ -417,26 +421,26 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     animate();
   }, [render]);
 
-  // Resize canvas
+  // Resize canvas when layout size changes
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
     const resizeCanvas = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      canvas.width = width;
+      canvas.height = height;
     };
 
     resizeCanvas();
-    window.addEventListener("resize", resizeCanvas);
-    return () => window.removeEventListener("resize", resizeCanvas);
-  }, []);
+  }, [width, height]);
 
   return (
     <canvas
       ref={canvasRef}
       className="absolute inset-0 cursor-crosshair"
-      style={{ touchAction: "none" }}
+      style={{ touchAction: "none", width, height }}
+      width={width}
+      height={height}
       onMouseMove={handleMouseMove}
       onClick={handleClick}
       onTouchMove={(e) => {
