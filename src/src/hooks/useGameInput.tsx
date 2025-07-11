@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { Vector2D } from "../lib/gameTypes";
+import type { Vector2D } from "../lib/gameTypes";
 
 export const useGameInput = () => {
   const [mousePosition, setMousePosition] = useState<Vector2D>({ x: 0, y: 0 });

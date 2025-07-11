@@ -5,7 +5,7 @@ import GameUI from "./GameUI";
 import { Joystick } from "../Joystick";
 import { useGame } from "../../lib/stores/useGame";
 import { useAudio } from "../../lib/stores/useAudio";
-import { GameObject, Target, Obstacle } from "../../lib/gameTypes";
+import type { GameObject, Target, Obstacle } from "../../lib/gameTypes";
 import { generateSingleTarget, generateObstacles } from "../../lib/gameUtils";
 
 const DiscThrowingGame: React.FC = () => {

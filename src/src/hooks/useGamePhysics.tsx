@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { Disc, Target, Obstacle, Vector2D } from '../lib/gameTypes';
+import type { Disc, Target, Obstacle, Vector2D } from '../lib/gameTypes';
 import { 
   PhysicsDisc, 
   Vector2, 
