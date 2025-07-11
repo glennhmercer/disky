@@ -14,13 +14,13 @@ const GameUI: React.FC<GameUIProps> = ({ score, level, targetHit }) => {
   return (
     <div className="absolute inset-0 pointer-events-none">
       {/* Top UI */}
-      <div className="absolute top-4 left-4 right-4 flex justify-between items-center">
-        <div className="bg-black bg-opacity-50 text-white px-4 py-2 rounded-lg">
+      <div className="absolute top-4 left-4 right-4 flex flex-wrap justify-between items-center gap-2">
+        <div className="bg-black bg-opacity-50 text-white px-4 py-2 rounded-lg text-center">
           <div className="text-sm">Score</div>
           <div className="text-2xl font-bold">{score}</div>
         </div>
-        
-        <div className="bg-black bg-opacity-50 text-white px-4 py-2 rounded-lg">
+
+        <div className="bg-black bg-opacity-50 text-white px-4 py-2 rounded-lg text-center">
           <div className="text-sm">Level</div>
           <div className="text-2xl font-bold">{level}</div>
         </div>
