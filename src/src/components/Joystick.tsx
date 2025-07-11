@@ -8,48 +8,46 @@ export const Joystick: React.FC<JoystickProps> = ({ onTiltChange }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [center, setCenter] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
+  const [stickPos, setStickPos] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
     const rect = containerRef.current?.getBoundingClientRect();
     if (rect) setCenter({ x: rect.width / 2, y: rect.height / 2 });
   }, []);
 
-  const calculateTilt = (
-    clientX: number,
-    clientY: number,
-  ): { tiltX: number; tiltY: number } | null => {
+  const updateJoystick = (clientX: number, clientY: number) => {
     const rect = containerRef.current?.getBoundingClientRect();
-    if (!rect) return null;
+    if (!rect) return;
 
     const dx = clientX - rect.left - center.x;
     const dy = clientY - rect.top - center.y;
     const maxRadius = rect.width / 2;
 
-    const tiltX = Math.max(-1, Math.min(1, dx / maxRadius));
-    const tiltY = Math.max(-1, Math.min(1, dy / maxRadius));
-    return { tiltX, tiltY };
+    const clampedX = Math.max(-maxRadius, Math.min(maxRadius, dx));
+    const clampedY = Math.max(-maxRadius, Math.min(maxRadius, dy));
+
+    setStickPos({ x: clampedX, y: clampedY });
+    const tiltX = clampedX / maxRadius;
+    const tiltY = clampedY / maxRadius;
+    onTiltChange(tiltX, tiltY);
   };
 
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     e.preventDefault();
     setDragging(true);
-    const tilt = calculateTilt(e.clientX, e.clientY);
-    if (tilt) {
-      onTiltChange(tilt.tiltX, tilt.tiltY);
-    }
+    e.currentTarget.setPointerCapture(e.pointerId);
+    updateJoystick(e.clientX, e.clientY);
   };
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!dragging) return;
     e.preventDefault();
-    const tilt = calculateTilt(e.clientX, e.clientY);
-    if (tilt) {
-      onTiltChange(tilt.tiltX, tilt.tiltY);
-    }
+    updateJoystick(e.clientX, e.clientY);
   };
 
   const handlePointerUp = () => {
     setDragging(false);
+    setStickPos({ x: 0, y: 0 });
     onTiltChange(0, 0);
   };
 
@@ -63,8 +61,15 @@ export const Joystick: React.FC<JoystickProps> = ({ onTiltChange }) => {
       className="absolute bottom-4 left-4 w-24 h-24 rounded-full bg-gray-800 bg-opacity-50 touch-none z-50 cursor-pointer"
       style={{ touchAction: "none" }}
     >
-      <div className="w-full h-full border-2 border-white rounded-full pointer-events-none flex items-center justify-center">
-        <div className="w-2 h-2 bg-white rounded-full" />
+      <div className="w-full h-full border-2 border-white rounded-full pointer-events-none">
+        <div
+          className="w-4 h-4 bg-white rounded-full absolute"
+          style={{
+            left: `calc(50% + ${stickPos.x}px - 0.5rem)`,
+            top: `calc(50% + ${stickPos.y}px - 0.5rem)`,
+            transition: dragging ? 'none' : 'left 0.1s, top 0.1s',
+          }}
+        />
       </div>
     </div>
   );
