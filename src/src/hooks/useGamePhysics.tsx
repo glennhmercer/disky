@@ -1,59 +1,59 @@
 import { useCallback } from 'react';
-import type { Disc, Target, Obstacle, Vector2D } from '../lib/gameTypes';
+import type { Disc, Target, Obstacle, Vector2D, Vector3D } from '../lib/gameTypes';
 import {
   type PhysicsDisc,
-  type Vector2,
+  type Vector3,
   updateDisc,
   checkCollision,
   checkTargetHit,
   predictTrajectory,
   initializeVelocity,
-  normalize,
 } from '../lib/physics';
 
 export const useGamePhysics = () => {
   // Convert old Disc type to new PhysicsDisc
   const convertToPhysicsDisc = useCallback((disc: Disc): PhysicsDisc => {
     return {
-      position: { x: disc.position.x, y: disc.position.y },
-      velocity: { x: disc.velocity.x, y: disc.velocity.y },
+      position: { x: disc.position.x, y: disc.position.y, z: disc.position.z },
+      velocity: { x: disc.velocity.x, y: disc.velocity.y, z: disc.velocity.z },
       radius: disc.radius,
-      isActive: disc.isActive
+      isActive: disc.isActive,
     };
   }, []);
 
   // Convert PhysicsDisc back to old Disc type
-  const convertFromPhysicsDisc = useCallback((physicsDisc: PhysicsDisc, originalDisc: Disc): Disc => {
-    return {
-      ...originalDisc,
-      position: { 
-        x: physicsDisc.position.x, 
-        y: physicsDisc.position.y, 
-        z: originalDisc.position.z 
-      },
-      velocity: { 
-        x: physicsDisc.velocity.x, 
-        y: physicsDisc.velocity.y, 
-        z: 0 
-      },
-      isActive: physicsDisc.isActive
-    };
-  }, []);
+  const convertFromPhysicsDisc = useCallback(
+    (physicsDisc: PhysicsDisc, originalDisc: Disc): Disc => {
+      return {
+        ...originalDisc,
+        position: {
+          x: physicsDisc.position.x,
+          y: physicsDisc.position.y,
+          z: physicsDisc.position.z,
+        },
+        velocity: {
+          x: physicsDisc.velocity.x,
+          y: physicsDisc.velocity.y,
+          z: physicsDisc.velocity.z,
+        },
+        isActive: physicsDisc.isActive,
+      };
+    },
+    []
+  );
 
   const updateDiscs = useCallback((discs: Disc[]): Disc[] => {
     return discs.map(disc => {
       if (!disc.isActive) return disc;
 
-      // Convert to physics disc
       const physicsDisc = convertToPhysicsDisc(disc);
       
-      // Update using new 2-axis physics system 
+      // Update using 3D physics system
       const deltaTime = 1/60; // 60 FPS
       const tiltX = disc.spin; // Use spin as lateral tilt
       const tiltY = disc.tiltY || 0; // Use tiltY if available, otherwise 0
       const updatedPhysicsDisc = updateDisc(physicsDisc, tiltX, tiltY, deltaTime);
       
-      // Convert back to old format
       return convertFromPhysicsDisc(updatedPhysicsDisc, disc);
     });
   }, [convertToPhysicsDisc, convertFromPhysicsDisc]);
@@ -106,21 +106,17 @@ export const useGamePhysics = () => {
     spin: number,
     tiltY: number = 0
   ): Vector2D[] => {
-    const startPos2D: Vector2 = { x: startPos.x, y: startPos.y };
-    const velocity2D: Vector2 = { x: velocity.x, y: velocity.y };
-    
-    // Use both tiltX (spin) and tiltY
-    const trajectory = predictTrajectory(startPos2D, velocity2D, spin, tiltY, steps);
-    
-    // Convert to old format
+    const trajectory = predictTrajectory(startPos, velocity, spin, tiltY, steps);
     return trajectory.map(pos => ({ x: pos.x, y: pos.y }));
   }, []);
 
   // New function to create initial velocity based on direction and strength
-  const createInitialVelocity = useCallback((direction: Vector2D, strength: number = 1.0): Vector2D => {
-    const velocity2D = initializeVelocity({ x: direction.x, y: direction.y }, strength);
-    return { x: velocity2D.x, y: velocity2D.y };
-  }, []);
+  const createInitialVelocity = useCallback(
+    (direction: Vector2D, strength: number = 1.0, vertical: number = 0.5): Vector3D => {
+      return initializeVelocity({ x: direction.x, y: direction.y }, strength, vertical);
+    },
+    []
+  );
 
   return {
     updateDiscs,
