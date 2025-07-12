@@ -2,7 +2,6 @@ import React, { useState, useCallback, useEffect, useMemo } from "react";
 import GameCanvas from "./GameCanvas";
 import { useLayoutManager } from "../../hooks/useLayoutManager";
 import GameUI from "./GameUI";
-import { Joystick } from "../Joystick";
 import { useGame } from "../../lib/stores/useGame";
 import { useAudio } from "../../lib/stores/useAudio";
 import type { GameObject, Target, Obstacle } from "../../lib/gameTypes";
@@ -19,7 +18,6 @@ const DiscThrowingGame: React.FC = () => {
   const [obstacles, setObstacles] = useState<Obstacle[]>([]);
   const [gameStarted, setGameStarted] = useState(false);
   const [targetHit, setTargetHit] = useState(false);
-  const [currentTilt, setCurrentTilt] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
     if (phase === "ready") {
@@ -69,10 +67,6 @@ const DiscThrowingGame: React.FC = () => {
     playHit();
   }, [playHit]);
 
-  const handleTiltChange = useCallback((tiltX: number, tiltY: number) => {
-    console.log("Game received tilt change - tiltX:", tiltX, "tiltY:", tiltY);
-    setCurrentTilt({ x: tiltX, y: tiltY });
-  }, []);
 
   if (phase === "ready" && !gameStarted) {
     return (
@@ -84,7 +78,7 @@ const DiscThrowingGame: React.FC = () => {
           </p>
           <div className="text-white mb-8">
             <p className="mb-2">🎯 Step 1: Click to set throwing direction</p>
-            <p className="mb-2">🥏 Step 2: Use joystick to tilt disc (2-axis control)</p>
+            <p className="mb-2">🥏 Step 2: Tilt left/right to curve the disc</p>
             <p className="mb-2">🎮 Each level has one target to hit</p>
             <p className="mb-2">🚧 Obstacles appear at higher levels</p>
           </div>
@@ -124,13 +118,11 @@ const DiscThrowingGame: React.FC = () => {
           obstacles={obstacles}
           onTargetHit={handleTargetHit}
           onObstacleHit={handleObstacleHit}
-          currentTilt={currentTilt}
           width={width}
           height={height}
         />
         <GameUI score={score} level={level} targetHit={targetHit} />
       </div>
-      <Joystick onTiltChange={handleTiltChange} />
     </div>
   );
 };

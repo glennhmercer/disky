@@ -8,7 +8,6 @@ interface GameCanvasProps {
   obstacles: Obstacle[];
   onTargetHit: (targetId: string) => void;
   onObstacleHit: () => void;
-  currentTilt: { x: number; y: number };
   width: number;
   height: number;
 }
@@ -20,7 +19,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   obstacles,
   onTargetHit,
   onObstacleHit,
-  currentTilt,
   width,
   height,
 }) => {
@@ -85,15 +83,14 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         z: 0, // Keep z for compatibility but new physics is 2D
       };
 
-      console.log("Throwing disc with 2-AXIS PHYSICS:", velocity, "direction:", direction, "tiltX:", currentTilt.x, "tiltY:", currentTilt.y);
+      console.log("Throwing disc with 2-AXIS PHYSICS:", velocity, "direction:", direction, "tilt:", tiltAmount);
 
       const newDisc: Disc = {
         id: Date.now().toString(),
         position: { ...startPos },
         velocity: { ...velocity },
         radius: 20,
-        spin: currentTilt.x, // Use joystick tiltX for lateral spin
-        tiltY: currentTilt.y, // Use joystick tiltY for vertical tilt
+        spin: tiltAmount,
         isActive: true,
       };
 
