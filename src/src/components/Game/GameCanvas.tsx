@@ -75,15 +75,15 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       
       // STEP 3: Initialize velocity based on direction and throw strength
       const throwStrength = 1.0; // Can be adjusted for power control
-      const initialVelocity = createInitialVelocity(direction, throwStrength);
+      const initialVelocity = createInitialVelocity(direction, throwStrength, 0.6);
       
       const velocity = {
         x: initialVelocity.x,
         y: initialVelocity.y,
-        z: 0, // Keep z for compatibility but new physics is 2D
+        z: initialVelocity.z,
       };
 
-      console.log("Throwing disc with 2-AXIS PHYSICS:", velocity, "direction:", direction, "tilt:", tiltAmount);
+      console.log("Throwing disc with 3D PHYSICS:", velocity, "direction:", direction, "tilt:", tiltAmount);
 
       const newDisc: Disc = {
         id: Date.now().toString(),
@@ -134,7 +134,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       if (!canvas) return;
 
       const startPos = { x: canvas.width / 2, y: canvas.height - 50, z: 0 };
-      const forwardVelocity = 7.5;
       
       // Use the same direction calculation as throwing
       const direction = {
@@ -143,12 +142,12 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       };
       
       const throwStrength = 1.0;
-      const initialVelocity = createInitialVelocity(direction, throwStrength);
+      const initialVelocity = createInitialVelocity(direction, throwStrength, 0.6);
       
       const velocity = {
         x: initialVelocity.x,
         y: initialVelocity.y,
-        z: 0,
+        z: initialVelocity.z,
       };
 
       const preview = calculateTrajectory(startPos, velocity, 100, tiltAmount);
